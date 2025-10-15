@@ -9,7 +9,6 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       bot-traffic-shield
- * Domain Path:       /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 1.0.0
  */
-final class Bot_Traffic_Shield {
+final class btsld_Traffic_Shield {
 
     /**
      * Plugin version.
@@ -33,7 +32,7 @@ final class Bot_Traffic_Shield {
     /**
      * The single instance of the class.
      *
-     * @var Bot_Traffic_Shield
+     * @var btsld_Traffic_Shield
      * @since 1.0.0
      */
     private static $_instance = null;
@@ -94,7 +93,7 @@ final class Bot_Traffic_Shield {
  * The main function for returning the plugin instance.
  */
 function btsld_run() {
-    return Bot_Traffic_Shield::instance();
+    return btsld_Traffic_Shield::instance();
 }
 
 // Get the plugin running.
