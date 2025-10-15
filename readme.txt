@@ -1,4 +1,4 @@
-=== Bot Traffic Shield ===
+=== Bot Traffic Shield - Block Bad Bots and Stop Ai Bots Crawlers ===
 Contributors: wpdelower,monarchwp23
 Tags: bots blocker, block ai, bot security, bot crawler, Bot Traffic Shield
 Requires at least: 6.0
