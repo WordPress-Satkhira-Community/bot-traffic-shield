@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name:       Bot Traffic Shield
- * Plugin URI:        https://delowerhossain.com/plugins/bot-traffic-shield
+ * Plugin URI:        https://wordpress.org/plugins/bot-traffic-shield/
  * Description:       A powerful and user-friendly plugin to block AI crawlers and malicious data scraper bots, protecting your content and server resources.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Delower Hossain   
  * Author URI:        https://delowerhossain.com/
  * License:           GPL-2.0-or-later
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Main Bot Traffic Shield Class.
  *
- * @since 1.0.0
+ * @since 1.0.1
  */
 final class btsld_Traffic_Shield {
 
