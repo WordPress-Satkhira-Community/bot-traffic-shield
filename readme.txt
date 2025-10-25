@@ -3,7 +3,7 @@ Contributors: wpdelower,monarchwp23
 Tags: Bad Bots, block bots, fail2ban, Stop Bots, AI Spider
 Requires at least: 6.0
 Tested up to: 6.8
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,12 @@ The `robots.txt` file is a polite request that well-behaved bots follow. The Use
 3. The default blocklist tab, showing the curated list of User-Agents blocked by default.
 
 == Changelog ==
+
+= 1.0.2 (25 October,2025) =
+* New Interface
+* CSV export Features
+* Performance Update
+* Bug Fix
 
 = 1.0.1 (23 October,2025) =
 * Bug Fix
