@@ -472,4 +472,241 @@ input:checked + .btsld-slider:hover {
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
+
+/* ========================================
+   Modern Pagination Styles
+   ======================================== */
+
+/* Pagination Container */
+.btsld-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin: 20px 0;
+    gap: 20px;
+}
+
+/* Item Counter */
+.btsld-displaying-num {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    background: #f8fafc;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Pagination Links Container */
+.btsld-pagination-links {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Page Number Links & Current Page */
+.btsld-pagination-links a,
+.btsld-pagination-links span.current,
+.btsld-pagination-links span.dots {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    text-decoration: none;
+    color: #475569;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+/* Current Active Page */
+.btsld-pagination-links span.current {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    cursor: default;
+}
+
+/* Page Number Hover */
+.btsld-pagination-links a:hover {
+    background: #f8fafc;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Page Number Active (Click) */
+.btsld-pagination-links a:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Dots (Ellipsis) */
+.btsld-pagination-links .dots {
+    border: none;
+    background: transparent;
+    cursor: default;
+    min-width: 40px;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.btsld-pagination-links .dots:hover {
+    transform: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* Previous & Next Buttons */
+.btsld-pagination-links .prev,
+.btsld-pagination-links .next {
+    font-weight: 600;
+    padding: 0 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #cbd5e1;
+    color: #475569;
+}
+
+.btsld-pagination-links .prev:hover,
+.btsld-pagination-links .next:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Disabled State (if implemented) */
+.btsld-pagination-links .prev.disabled,
+.btsld-pagination-links .next.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Compact Pagination (for mobile) */
+@media screen and (max-width: 782px) {
+    .btsld-pagination {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .btsld-displaying-num {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .btsld-pagination-links {
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .btsld-pagination-links a,
+    .btsld-pagination-links span.current,
+    .btsld-pagination-links span.dots {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 10px;
+        font-size: 13px;
+    }
+    
+    .btsld-pagination-links .prev,
+    .btsld-pagination-links .next {
+        padding: 0 12px;
+    }
+}
+
+/* Extra Small Screens */
+@media screen and (max-width: 480px) {
+    .btsld-pagination-links a,
+    .btsld-pagination-links span.current {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+    
+    /* Hide some page numbers on very small screens */
+    .btsld-pagination-links a:not(.prev):not(.next):not(:nth-child(-n+3)):not(:nth-last-child(-n+3)) {
+        display: none;
+    }
+}
+
+/* Top Pagination Specific Styling */
+.btsld-card .btsld-pagination:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* Bottom Pagination Specific Styling */
+.btsld-card .btsld-pagination:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-top: 2px solid #f1f5f9;
+    padding-top: 20px;
+}
+
+/* Loading State Animation (Optional Enhancement) */
+@keyframes paginationPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.btsld-pagination.loading {
+    animation: paginationPulse 1.5s ease-in-out infinite;
+}
+
+/* Page Info Text (Optional - shows "Page 1 of 10") */
+.btsld-pagination-info {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Smooth Scrolling when clicking pagination */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus States for Accessibility */
+.btsld-pagination-links a:focus,
+.btsld-pagination-links span.current:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    .btsld-pagination {
+        /* Add dark mode styles if needed */
+    }
+}
+
+/* ========================================
+   End Modern Pagination Styles
+   ======================================== */
+
 /* End of Bot Traffic Shield - Modern Admin Styles */

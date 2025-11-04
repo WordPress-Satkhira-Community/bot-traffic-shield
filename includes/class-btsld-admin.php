@@ -157,26 +157,20 @@ class BTSLD_Admin {
             );
         }
 
-        
         exit;
     }
 
     /**
      * Renders the toggle switch field for settings.
-     * UPDATED: Now uses the WordPress `checked()` function for security and best practices.
      */
     public function render_field_toggle( $args ) {
         $settings = get_option( 'btsld_settings' );
         $id = $args['id'];
-        // Get the current value, defaulting to '0' if it doesn't exist.
         $current_value = isset( $settings[$id] ) ? $settings[$id] : '0';
 
         echo '<label class="btsld-switch">';
         echo '<input type="checkbox" id="btsld_settings_' . esc_attr( $id ) . '" name="btsld_settings[' . esc_attr( $id ) . ']" value="1" ';
-        
-        // Use the WordPress 'checked()' function to securely output the 'checked' attribute.
         checked( $current_value, '1' );
-
         echo ' />';
         echo '<span class="btsld-slider"></span>';
         echo '</label>';
@@ -191,8 +185,85 @@ class BTSLD_Admin {
         echo '<p class="description">' . esc_html( $args['label'] ) . '</p>';
     }
 
+    /**
+     * Get paginated logs
+     *
+     * @param int $per_page Number of logs per page
+     * @param int $page_number Current page number
+     * @return array
+     */
+    private function get_paginated_logs( $per_page = 10, $page_number = 1 ) {
+        $log = get_option( 'btsld_blocked_log', array() );
+        
+        if ( ! is_array( $log ) || empty( $log ) ) {
+            return array();
+        }
+
+        $offset = ( $page_number - 1 ) * $per_page;
+        return array_slice( $log, $offset, $per_page );
+    }
+
+    /**
+     * Get total count of logs
+     *
+     * @return int
+     */
+    private function get_logs_count() {
+        $log = get_option( 'btsld_blocked_log', array() );
+        return is_array( $log ) ? count( $log ) : 0;
+    }
+
+    /**
+     * Display pagination links
+     *
+     * @param int $total_items Total number of items
+     * @param int $per_page Items per page
+     * @param int $current_page Current page number
+     */
+    private function display_pagination( $total_items, $per_page, $current_page ) {
+        $total_pages = ceil( $total_items / $per_page );
+        
+        if ( $total_pages <= 1 ) {
+            return;
+        }
+
+        $page_links = paginate_links( array(
+            'base'         => add_query_arg( 'log_page', '%#%' ),
+            'format'       => '',
+            'prev_text'    => '&laquo; ' . __( 'Previous', 'bot-traffic-shield' ),
+            'next_text'    => __( 'Next', 'bot-traffic-shield' ) . ' &raquo;',
+            'total'        => $total_pages,
+            'current'      => $current_page,
+            'type'         => 'plain',
+            'add_fragment' => '#log',
+        ) );
+
+        if ( $page_links ) {
+            echo '<div class="btsld-pagination">';
+            
+            echo '<span class="btsld-displaying-num">';
+            printf(
+                /* translators: %s: number of items */
+                esc_html( _n( '%s item', '%s items', $total_items, 'bot-traffic-shield' ) ),
+                esc_html( number_format_i18n( $total_items ) )
+            );
+            echo '</span>';
+            
+            echo '<span class="btsld-pagination-links">';
+            echo wp_kses_post( $page_links );
+            echo '</span>';
+            
+            echo '</div>';
+        }
+    }
+
     public function admin_page_html() {
         if ( ! current_user_can( 'manage_options' ) ) return;
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pagination parameter
+        $current_page = isset( $_GET['log_page'] ) ? max( 1, absint( $_GET['log_page'] ) ) : 1;
+        $per_page = 10;
+        
         ?>
         <div class="wrap btsld-wrap">
             <h1><?php esc_html_e( 'Bot Traffic Shield', 'bot-traffic-shield' ); ?></h1>
@@ -220,14 +291,28 @@ class BTSLD_Admin {
 
                 <div class="btsld-card">
                     <h2><?php esc_html_e( 'Recent Blocked Requests', 'bot-traffic-shield' ); ?></h2>
-                    <?php $log = get_option( 'btsld_blocked_log', array() ); ?>
-                    <?php if ( empty( $log ) ) : ?>
+                    <?php 
+                    $total_logs = $this->get_logs_count();
+                    $paginated_logs = $this->get_paginated_logs( $per_page, $current_page );
+                    ?>
+                    <?php if ( empty( $paginated_logs ) ) : ?>
                         <p><?php esc_html_e( 'No bots have been blocked yet, or logging is disabled.', 'bot-traffic-shield' ); ?></p>
                     <?php else : ?>
+                        
+                        <!-- Top Pagination -->
+                        <?php $this->display_pagination( $total_logs, $per_page, $current_page ); ?>
+
                         <table class="btsld-log-table">
-                            <thead><tr><th><?php esc_html_e( 'Date & Time', 'bot-traffic-shield' ); ?></th><th><?php esc_html_e( 'Blocked Bot', 'bot-traffic-shield' ); ?></th><th><?php esc_html_e( 'Full User Agent', 'bot-traffic-shield' ); ?></th><th><?php esc_html_e( 'IP Address', 'bot-traffic-shield' ); ?></th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th><?php esc_html_e( 'Date & Time', 'bot-traffic-shield' ); ?></th>
+                                    <th><?php esc_html_e( 'Blocked Bot', 'bot-traffic-shield' ); ?></th>
+                                    <th><?php esc_html_e( 'Full User Agent', 'bot-traffic-shield' ); ?></th>
+                                    <th><?php esc_html_e( 'IP Address', 'bot-traffic-shield' ); ?></th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                <?php foreach ( $log as $entry ) : ?>
+                                <?php foreach ( $paginated_logs as $entry ) : ?>
                                     <tr>
                                         <td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['time'] ) ); ?></td>
                                         <td><?php echo esc_html( $entry['bot'] ); ?></td>
@@ -237,9 +322,12 @@ class BTSLD_Admin {
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+
+                        <!-- Bottom Pagination -->
+                        <?php $this->display_pagination( $total_logs, $per_page, $current_page ); ?>
+                        
                     <?php endif; ?>
                 </div>
-				
 
                 <div class="btsld-card">
                     <h2><?php esc_html_e( 'Export Logs (CSV)', 'bot-traffic-shield' ); ?></h2>
@@ -257,7 +345,6 @@ class BTSLD_Admin {
                         <p class="description"><?php esc_html_e( 'Downloads a CSV of recent blocked bot entries. Use All time to export the complete log (up to 100 most recent entries).', 'bot-traffic-shield' ); ?></p>
                     </form>
                 </div>
-				
             </div>
 
             <div id="blocked-bots" class="btsld-tab-content">
