@@ -262,7 +262,7 @@ class BTSLD_Admin {
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pagination parameter
         $current_page = isset( $_GET['log_page'] ) ? max( 1, absint( $_GET['log_page'] ) ) : 1;
-        $per_page = 10;
+        $per_page = 20;
         
         ?>
         <div class="wrap btsld-wrap">
