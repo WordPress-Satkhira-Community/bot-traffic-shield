@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Admin Bar Badge for Bot Traffic Shield
  * Shows "Blocked today: X" in the WordPress admin toolbar
  *
- * @since 1.0.3
+ * @since 1.0.4
  */
 class BTSLD_Admin_Bar {
 

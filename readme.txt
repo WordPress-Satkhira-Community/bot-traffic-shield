@@ -5,7 +5,7 @@ Tags: Bad Bots, block bots, fail2ban, Stop Bots, AI Spider
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -222,6 +222,10 @@ In fact, by blocking unwanted bots, you'll likely see **improved** server perfor
 
 == Changelog ==
 
+= 1.0.4 (2025-11-26) =
+* **New:** Clear Log
+* **Improved:** Modern, redesigned admin interface
+
 = 1.0.3 (2025-11-05) =
 * **New:** Pagination system for block logs (20 entries per page)
 * **New:** CSV export with date range filtering (7 days, 30 days, all time)
@@ -250,6 +254,9 @@ In fact, by blocking unwanted bots, you'll likely see **improved** server perfor
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+Major update! Clear log button added. Recommended for all users.
 
 = 1.0.3 =
 Major update! New pagination system for easier log browsing and CSV export feature for data analysis. Enhanced admin interface and improved performance. Recommended for all users.
