@@ -19,6 +19,9 @@ class BTSLD_Admin {
 
         // CSV Export handler (admin-post)
         add_action( 'admin_post_btsld_export_csv', array( $this, 'handle_export_csv' ) );
+
+        // Clear logs AJAX handler
+        add_action( 'wp_ajax_btsld_clear_logs', array( $this, 'handle_clear_logs' ) );
     }
 
     public function admin_menu() {
@@ -36,7 +39,18 @@ class BTSLD_Admin {
             return;
         }
         wp_enqueue_style( 'btsld-admin-css', BTSLD_PLUGIN_URL . 'assets/css/btsld-admin.css', array(), BTSLD_VERSION );
-        wp_enqueue_script( 'btsld-admin-js', BTSLD_PLUGIN_URL . 'assets/js/btsld-admin.js', array('jquery'), BTSLD_VERSION, true );
+        wp_enqueue_script( 'btsld-admin-js', BTSLD_PLUGIN_URL . 'assets/js/btsld-admin.js', array( 'jquery' ), BTSLD_VERSION, true );
+
+        // Localize script for AJAX
+        wp_localize_script( 'btsld-admin-js', 'btsld_admin', array(
+            'ajax_url'         => admin_url( 'admin-ajax.php' ),
+            'clear_logs_nonce' => wp_create_nonce( 'btsld_clear_logs_nonce' ),
+            'confirm_clear'    => __( 'Are you sure you want to clear all logs? This action cannot be undone.', 'bot-traffic-shield' ),
+            'clearing'         => __( 'Clearing...', 'bot-traffic-shield' ),
+            'clear_logs'       => __( 'Clear All Logs', 'bot-traffic-shield' ),
+            'empty_log_msg'    => __( 'No bots have been blocked yet, or logging is disabled.', 'bot-traffic-shield' ),
+            'error_msg'        => __( 'An error occurred. Please try again.', 'bot-traffic-shield' ),
+        ) );
     }
 
     public function register_settings() {
@@ -158,6 +172,34 @@ class BTSLD_Admin {
         }
 
         exit;
+    }
+
+    /**
+     * AJAX handler for clearing logs.
+     * Deletes all blocked log entries and resets the counter.
+     */
+    public function handle_clear_logs() {
+        // Verify nonce
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'btsld_clear_logs_nonce' ) ) {
+            wp_send_json_error( array(
+                'message' => __( 'Security check failed.', 'bot-traffic-shield' ),
+            ) );
+        }
+
+        // Check permissions
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array(
+                'message' => __( 'You do not have permission to clear logs.', 'bot-traffic-shield' ),
+            ) );
+        }
+
+        // Clear the log and reset counter
+        delete_option( 'btsld_blocked_log' );
+        update_option( 'btsld_blocked_count', 0 );
+
+        wp_send_json_success( array(
+            'message' => __( 'All logs have been cleared successfully.', 'bot-traffic-shield' ),
+        ) );
     }
 
     /**
@@ -286,17 +328,26 @@ class BTSLD_Admin {
             <div id="log" class="btsld-tab-content">
                 <div class="btsld-card">
                     <h2><?php esc_html_e( 'Blocking Statistics', 'bot-traffic-shield' ); ?></h2>
-                    <p><strong><?php esc_html_e( 'Total Blocked Requests:', 'bot-traffic-shield' ); ?></strong> <?php echo (int) get_option( 'btsld_blocked_count', 0 ); ?></p>
+                    <p>
+                        <strong><?php esc_html_e( 'Total Blocked Requests:', 'bot-traffic-shield' ); ?></strong> 
+                        <span id="btsld-blocked-count"><?php echo (int) get_option( 'btsld_blocked_count', 0 ); ?></span>
+                    </p>
+                    <p class="btsld-clear-logs-wrapper">
+                        <button type="button" id="btsld-clear-logs-btn" class="button button-secondary">
+                            <?php esc_html_e( 'Clear All Logs', 'bot-traffic-shield' ); ?>
+                        </button>
+                        <span id="btsld-clear-logs-message" class="btsld-message"></span>
+                    </p>
                 </div>
 
-                <div class="btsld-card">
+                <div class="btsld-card" id="btsld-log-card">
                     <h2><?php esc_html_e( 'Recent Blocked Requests', 'bot-traffic-shield' ); ?></h2>
                     <?php 
                     $total_logs = $this->get_logs_count();
                     $paginated_logs = $this->get_paginated_logs( $per_page, $current_page );
                     ?>
                     <?php if ( empty( $paginated_logs ) ) : ?>
-                        <p><?php esc_html_e( 'No bots have been blocked yet, or logging is disabled.', 'bot-traffic-shield' ); ?></p>
+                        <p id="btsld-empty-log-message"><?php esc_html_e( 'No bots have been blocked yet, or logging is disabled.', 'bot-traffic-shield' ); ?></p>
                     <?php else : ?>
                         
                         <!-- Top Pagination -->
