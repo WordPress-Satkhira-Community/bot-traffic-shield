@@ -1,11 +1,11 @@
 === Bot Traffic Shield - Block Bad Bots and Stop AI Bots Crawlers ===
-Contributors: wpdelower,monarchwp23
+Contributors: wpdelower,monarchwp23, zakir021063008
 Donate link: https://monarchwp.com/
-Tags: Bad Bots, block bots, fail2ban, Stop Bots, AI Spider
+Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,34 +21,63 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 
 *   **Protect Your Content** - Stop AI companies from training their models on your hard work
 *   **Reduce Server Load** - Block unwanted traffic that wastes your bandwidth and resources
-*   **SEO-Safe Blocking** - Only blocks harmful bots; legitimate search engines like Google and Bing remain unaffected
-*   **Take Control** - Decide who can and cannot access your valuable content
+*   **SEO-Safe Blocking** - 35+ legitimate search engines and social media indexers are automatically whitelisted and will NEVER be blocked
+*   **Granular Control** - Enable or disable protection against each AI provider individually (OpenAI, Anthropic, Google, Meta, Apple, ByteDance, and more)
+*   **Real-Time Analytics** - Beautiful interactive charts showing blocked traffic trends and bot breakdowns
+*   **Take Control** - Decide exactly who can and cannot access your valuable content
 
 ### ✨ Key Features
+
+**Interactive Analytics Dashboard (NEW in v1.0.5)**
+*   Real-time Chart.js powered trend graphs and doughnut charts
+*   Switchable timeframes: 7-day, 14-day, and 30-day views
+*   KPI summary cards showing total blocks, today's blocks, active rules, and top scraper
+*   Bot traffic breakdown showing which AI crawlers hit your site the most
+
+**Granular AI Crawler Toggles (NEW in v1.0.5)**
+*   Individual on/off switches for each AI provider
+*   Covers OpenAI (GPTBot, ChatGPT-User), Anthropic (ClaudeBot), Google (Gemini/Extended), Perplexity, Meta (FacebookBot), Apple (Applebot-Extended), ByteDance (Bytespider), Common Crawl, Cohere, Amazon, Diffbot, You.com, and more
+*   Select All / Deselect All bulk actions for quick configuration
+*   Each toggle shows provider name, description, and exact User-Agent strings
+
+**SEO Safety & Search Engine Whitelist (NEW in v1.0.5)**
+*   35+ whitelisted search engines and social media indexers that are NEVER blocked
+*   Includes Googlebot, Bingbot, DuckDuckBot, Baiduspider, YandexBot, Twitterbot, LinkedInBot, Facebook, WhatsApp, Slack, Discord, and more
+*   Explicit `Allow: /` rules added to robots.txt for all whitelisted bots
+*   Developer-friendly `btsld_search_engine_whitelist` filter hook for custom additions
+*   Standard Applebot (Siri/Spotlight) is whitelisted while Applebot-Extended (AI training) remains blockable
 
 **Real-Time Bot Blocking**
 *   Actively blocks bots by their User-Agent on every page request
 *   Immediate protection with zero configuration needed
+*   Returns proper 403 Forbidden headers with no-cache directives
 
 **Comprehensive Default Blocklist**
-*   Pre-configured list of 20+ known AI crawlers and scrapers
-*   Includes ChatGPT-User, Google-Extended, GPTBot, CCBot, Bytespider, Amazonbot, Applebot, and more
-*   Regularly updated with new bot signatures
+*   Pre-configured list of 15+ AI crawler groups covering 20+ User-Agent signatures
+*   Includes GPTBot, ChatGPT-User, ClaudeBot, Google-Extended, PerplexityBot, Bytespider, FacebookBot, Meta-ExternalAgent, Applebot-Extended, CCBot, Amazonbot, and more
+*   Regularly updated with new bot signatures in each plugin version
 
 **Advanced Logging & Analytics**
 *   Track every blocked bot attempt with detailed logs
 *   View bot name, IP address, user agent, and timestamp
 *   **Pagination system** - Browse through logs easily (20 entries per page)
-*   Running statistics showing total blocked requests
+*   Daily aggregated statistics powering the dashboard charts
+*   Running statistics showing total and daily blocked requests
 
 **CSV Export Capability**
-*   Export your block logs to CSV format
-*   Filter exports by date range (7 days, 30 days, or all time)
-*   Perfect for analysis, reporting, or compliance
+*   Export your block logs to CSV format with UTF-8 BOM for Excel compatibility
+*   Filter exports by date range (7 days, 14 days, 30 days, or all time)
+*   Includes timestamp, date, bot name, IP address, and full User-Agent
 
 **robots.txt Integration**
-*   Automatically adds `Disallow` rules to your virtual robots.txt
-*   Provides an additional layer of protection for well-behaved bots
+*   Automatically adds `Disallow` rules for blocked AI bots
+*   Automatically adds `Allow` rules for whitelisted search engines
+*   Provides dual-layer protection for both compliant and aggressive bots
+
+**Admin Toolbar Widget**
+*   Real-time "Blocked Today" counter in the WordPress admin bar
+*   Quick-access dropdown links to Dashboard, AI Rules, Activity Log, and Settings
+*   Lifetime blocked count display
 
 **Fully Customizable**
 *   Add your own custom User-Agent strings to block
@@ -57,15 +86,19 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   Master on/off switch for all blocking features
 
 **Modern, Intuitive Interface**
-*   Beautiful, clean admin UI with tabbed navigation
-*   Modern toggle switches and card-based design
+*   Beautiful 4-tab admin dashboard: Analytics, AI Rules, Settings, Activity Log
+*   Interactive Chart.js visualizations with smooth animations
+*   Card-based KPI metrics grid
+*   Modern toggle switches and responsive grid layouts
 *   Mobile-responsive admin panel
 *   No learning curve - start protecting immediately
 
 **Lightweight & Performance-Optimized**
 *   Minimal impact on site speed
 *   Efficient code that runs before page load
-*   No external API calls or database queries on frontend
+*   O(1) daily stats lookup for admin bar (no log iteration)
+*   No external API calls on frontend
+*   60-day automatic stats pruning to keep database lean
 
 ### 🎯 Who Is This Plugin For?
 
@@ -73,32 +106,36 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   **Bloggers** - Keep your unique content from being scraped
 *   **News Sites** - Prevent unauthorized content aggregation
 *   **E-commerce** - Protect product descriptions and pricing data
+*   **Publishers** - Safeguard premium content from AI training datasets
 *   **Any WordPress Site** - That values their content and server resources
 
 ### 🚀 How It Works
 
 1. Install and activate the plugin
-2. Bot Traffic Shield immediately starts blocking known bad bots
-3. Monitor blocked attempts in the logs
-4. Add custom bots to block as needed
-5. Export logs for analysis or record-keeping
+2. Bot Traffic Shield immediately starts blocking known AI bots
+3. Visit the **Dashboard & Charts** tab to monitor blocked traffic visually
+4. Fine-tune protection in the **AI Crawler Rules** tab by toggling individual providers
+5. Check the **Activity Log** tab for detailed block records
+6. Export logs for analysis or record-keeping
 
 **No complicated setup. No API keys. No subscriptions.**
 
 ### 🔒 Privacy & Security
 
 *   All data stays on your server
-*   No external services or third-party dependencies
+*   No external services or third-party dependencies on frontend
 *   GDPR compliant - you control all logged data
-*   Logs can be cleared at any time by disabling logging
+*   Logs can be cleared at any time with a single click
+*   Chart.js loaded locally for WordPress.org compliance
 
 ### 📊 Perfect For
 
-✅ Reducing bandwidth costs  
-✅ Protecting original content  
-✅ Improving server performance  
-✅ Maintaining competitive advantage  
-✅ Preventing AI training on your data  
+✅ Reducing bandwidth costs
+✅ Protecting original content from AI training
+✅ Improving server performance
+✅ Maintaining competitive advantage
+✅ Monitoring AI scraper activity with visual charts
+✅ Preventing unauthorized data harvesting
 
 Stop letting AI companies profit from your hard work. Install Bot Traffic Shield and take back control of your content today!
 
@@ -110,71 +147,105 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 2. Navigate to **Plugins > Add New**
 3. Search for "Bot Traffic Shield"
 4. Click **Install Now** and then **Activate**
-5. Go to **Settings > Bot Traffic Shield** to configure (optional)
+5. Go to **Settings > Bot Traffic Shield** to view your dashboard
 
 ### Manual Installation
 
 1. Download the plugin zip file
 2. Upload the `bot-traffic-shield` folder to `/wp-content/plugins/`
 3. Activate the plugin through the **Plugins** menu in WordPress
-4. Navigate to **Settings > Bot Traffic Shield** to configure
+4. Navigate to **Settings > Bot Traffic Shield** to view your dashboard
 
 ### Post-Installation
 
 *   Blocking is **enabled by default** upon activation
-*   Logging is **enabled by default** to track blocked bots
-*   Visit the settings page to customize your blocklist
-*   Check the **Block Log & Stats** tab to see blocked bots in real-time
+*   All AI crawler toggles are **enabled by default** for maximum protection
+*   Logging is **enabled by default** to power the analytics dashboard
+*   Visit the **AI Crawler Rules** tab to customize which AI providers to block
+*   Check the **Dashboard & Charts** tab to see real-time blocking analytics
 
 == Frequently Asked Questions ==
 
 = Will this affect my SEO or normal search engines? =
 
-**No.** Bot Traffic Shield specifically targets AI data crawlers and malicious scrapers. It does **not** block legitimate search engine crawlers like Googlebot, Bingbot, or other SEO-friendly bots. Your search rankings will remain completely unaffected.
+**Absolutely not.** Bot Traffic Shield includes a built-in whitelist of 35+ legitimate search engines and social media indexers (Googlebot, Bingbot, DuckDuckBot, Baiduspider, YandexBot, Twitterbot, LinkedInBot, and many more). These whitelisted bots are checked **first** before any blocking logic runs, guaranteeing they are never blocked — even if a custom rule would otherwise match them. Your search rankings will remain completely unaffected.
+
+= What's new in version 1.0.5? =
+
+Version 1.0.5 is a major feature update:
+*   **Interactive Analytics Dashboard** with Chart.js trend graphs and doughnut charts
+*   **Granular AI Crawler Toggles** to enable/disable each AI provider individually
+*   **SEO Safety Whitelist** protecting 35+ search engines from accidental blocking
+*   **KPI Summary Cards** showing total blocks, daily blocks, active rules, and top scraper
+*   **Admin Bar Widget** with real-time blocked count and quick navigation
+*   **7/14/30-day timeframe switcher** for chart analytics
 
 = Which bots does it block by default? =
 
-The plugin includes a comprehensive blocklist of 20+ known AI crawlers and scrapers, including:
+The plugin includes a comprehensive blocklist organized by AI provider:
 
-*   ChatGPT-User
-*   GPTBot
-*   Google-Extended
-*   CCBot
-*   Bytespider
-*   Amazonbot
-*   Applebot
-*   Claude-Web
-*   Anthropic-AI
-*   And many more...
+*   **OpenAI:** GPTBot, ChatGPT-User
+*   **Anthropic:** ClaudeBot, anthropic-ai, Claude-Web
+*   **Google:** Google-Extended (Gemini AI training)
+*   **Perplexity AI:** PerplexityBot
+*   **ByteDance:** Bytespider
+*   **Meta:** FacebookBot, Meta-ExternalAgent
+*   **Apple:** Applebot-Extended (AI training only — standard Applebot is whitelisted)
+*   **Common Crawl:** CCBot
+*   **Cohere:** cohere-ai
+*   **Amazon:** Amazonbot
+*   **Diffbot:** Diffbot
+*   **Webhose:** Omgilibot
+*   **You.com:** YouBot
+*   **Timpi:** Timpibot
 
-You can view the complete default list in the **Default Blocklist** tab in settings.
+You can enable or disable each provider individually in the **AI Crawler Rules** tab.
+
+= How do I enable or disable specific AI crawlers? =
+
+1. Go to **Settings > Bot Traffic Shield**
+2. Click on the **AI Crawler Rules** tab
+3. You'll see a grid of AI provider cards with toggle switches
+4. Turn off any AI crawler you want to allow
+5. Use **Select All** or **Deselect All** for quick bulk changes
+6. Click **Save AI Crawler Rules**
 
 = How do I add a custom bot to the blocklist? =
 
 1. Go to **Settings > Bot Traffic Shield**
-2. Scroll to **Custom User Agents to Block**
-3. Enter the User-Agent string (one per line)
-4. Click **Save Settings**
+2. Click on the **General Settings** tab
+3. Scroll to **Custom User Agents to Block**
+4. Enter the User-Agent string (one per line)
+5. Click **Save General Settings**
 
 Example: If you want to block "BadBot/1.0", simply add that line to the textarea.
+
+= How do I read the analytics charts? =
+
+The **Dashboard & Charts** tab shows two interactive charts:
+
+*   **Blocked Requests Trend** (line chart): Shows daily blocked bot counts over time. Use the 7/14/30-day buttons to change the timeframe.
+*   **Bot Traffic Breakdown** (doughnut chart): Shows which AI crawlers are hitting your site most frequently.
+
+The KPI cards at the top show your total blocks, today's blocks, number of active AI rules, and the most active scraper bot.
 
 = How do I export my block logs? =
 
 1. Go to **Settings > Bot Traffic Shield**
-2. Click on the **Block Log & Stats** tab
-3. Scroll to the **Export Logs (CSV)** section
-4. Choose your date range (7 days, 30 days, or all time)
-5. Click **Export CSV**
+2. Click on the **Activity Log** tab
+3. Scroll to the **Export Log to CSV** section
+4. Choose your date range (7 days, 14 days, 30 days, or all time)
+5. Click **Download CSV Export**
 
-The CSV file will download automatically with all blocked bot details.
+The CSV file will download automatically with all blocked bot details, including timestamps, bot names, IP addresses, and User-Agent strings.
 
 = Can I see which bots have been blocked? =
 
-**Yes!** The **Block Log & Stats** tab shows:
-*   Date and time of each block
-*   Bot name
-*   Full User-Agent string
+**Yes!** The **Activity Log** tab shows:
+*   Date and time of each block (UTC)
+*   Bot name / identifier
 *   IP address
+*   Full User-Agent string
 *   Total count of blocked requests
 
 Logs are paginated for easy browsing (20 entries per page).
@@ -182,27 +253,28 @@ Logs are paginated for easy browsing (20 entries per page).
 = What's the difference between User-Agent blocking and robots.txt? =
 
 *   **robots.txt** - A polite request that well-behaved bots follow (but can be ignored)
-*   **User-Agent blocking** - A hard block that forcibly denies access
+*   **User-Agent blocking** - A hard block that forcibly denies access with a 403 Forbidden response
 
 This plugin uses **both methods** for maximum protection. The robots.txt is for compliant bots, while User-Agent blocking stops aggressive or malicious bots that ignore robots.txt.
 
 = Does this plugin slow down my website? =
 
 **No.** Bot Traffic Shield is designed to be extremely lightweight:
-*   Runs early in the WordPress load process
+*   Runs early in the WordPress load process (priority 1 on `init`)
 *   Minimal database queries
-*   No external API calls
-*   Negligible performance impact
+*   No external API calls on frontend
+*   O(1) stats lookup for the admin bar widget
+*   Automatic 60-day stats pruning
 
 In fact, by blocking unwanted bots, you'll likely see **improved** server performance.
 
 = Can I temporarily disable blocking? =
 
-**Yes.** Simply toggle the **Enable Bot Blocking** switch to OFF in the settings. You can re-enable it at any time without losing your custom configuration.
+**Yes.** Simply toggle the **Shield Status** switch to OFF in the **General Settings** tab. You can re-enable it at any time without losing your custom configuration or AI crawler toggles.
 
 = Will I lose my logs if I disable logging? =
 
-**Yes.** Disabling logging will clear all existing logs and stop recording new blocks. If you want to keep your logs, export them to CSV before disabling.
+Disabling logging will stop recording new blocks. To clear existing logs, use the **Clear All Logs** button in the Activity Log tab. If you want to keep your logs, export them to CSV before clearing.
 
 = Is this plugin compatible with caching plugins? =
 
@@ -210,20 +282,50 @@ In fact, by blocking unwanted bots, you'll likely see **improved** server perfor
 
 = Can I use this with other security plugins? =
 
-**Yes.** Bot Traffic Shield focuses specifically on bot blocking and works seamlessly alongside other security plugins like Wordfence, Sucuri, or iThemes Security.
+**Yes.** Bot Traffic Shield focuses specifically on AI bot blocking and works seamlessly alongside other security plugins like Wordfence, Sucuri, iThemes Security, or Cloudflare.
+
+= Can developers customize the search engine whitelist? =
+
+**Yes.** Developers can add or remove whitelisted bots using the `btsld_search_engine_whitelist` filter in their theme's `functions.php`:
+
+`add_filter( 'btsld_search_engine_whitelist', function( $whitelist ) {
+    $whitelist['MyCustomBot'] = 'My Custom Search Engine';
+    return $whitelist;
+} );`
 
 == Screenshots ==
 
-1. Modern settings interface with toggle switches and custom bot configuration
-2. Block log and statistics dashboard showing paginated bot blocking history
-3. Default blocklist showing all pre-configured AI crawlers and scrapers
-4. CSV export feature with flexible date range options
-5. Real-time blocking statistics and detailed log entries
+1. Interactive analytics dashboard with Chart.js trend graphs, doughnut charts, and KPI summary cards
+2. Granular AI crawler rules panel with individual toggle switches for each AI provider
+3. General settings page with master switch, logging toggle, and custom blocklist
+4. Activity log with paginated blocked bot entries and CSV export
+5. Admin toolbar widget showing real-time blocked count with quick navigation dropdown
+6. robots.txt output showing whitelisted search engines and blocked AI crawlers
 
 == Changelog ==
 
+= 1.0.5 (2026-08-23) =
+* **New:** Interactive analytics dashboard powered by Chart.js with trend line and doughnut charts
+* **New:** Switchable chart timeframes (7-day, 14-day, 30-day views)
+* **New:** KPI summary cards (Total Blocked, Blocked Today, Active AI Rules, Top Scraper)
+* **New:** Granular AI crawler toggle system — enable/disable each AI provider individually
+* **New:** 15 AI provider groups covering 20+ User-Agent signatures (OpenAI, Anthropic, Google, Meta, Apple, ByteDance, Perplexity, Common Crawl, Cohere, Amazon, Diffbot, You.com, and more)
+* **New:** Select All / Deselect All bulk actions for AI crawler rules
+* **New:** SEO Safety Whitelist protecting 35+ legitimate search engines and social media indexers from accidental blocking
+* **New:** Explicit `Allow: /` robots.txt rules for all whitelisted search engines
+* **New:** `btsld_search_engine_whitelist` developer filter hook
+* **New:** Admin toolbar widget with real-time "Blocked Today" counter and quick navigation
+* **New:** Daily aggregated statistics engine with 60-day auto-pruning
+* **Improved:** Complete admin UI redesign with 4-tab layout (Dashboard, AI Rules, Settings, Log)
+* **Improved:** Modern card-based design with responsive grid layouts
+* **Improved:** O(1) performance for admin bar stats lookup
+* **Improved:** Enhanced CSV export with 14-day option and UTF-8 BOM for Excel
+* **Improved:** WordPress 6.8 compatibility verified
+* **Fixed:** Singleton pattern hardened against cloning and unserialization
+* **Fixed:** Proper handling of empty chart states when no bots have been blocked
+
 = 1.0.4 (2025-11-26) =
-* **New:** Clear Log
+* **New:** Clear Log button with AJAX handler
 * **Improved:** Modern, redesigned admin interface
 
 = 1.0.3 (2025-11-05) =
@@ -255,6 +357,9 @@ In fact, by blocking unwanted bots, you'll likely see **improved** server perfor
 
 == Upgrade Notice ==
 
+= 1.0.5 =
+Major feature update! New interactive analytics dashboard with Chart.js charts, granular AI crawler toggles for each provider, SEO-safe search engine whitelisting (35+ bots protected), and admin toolbar widget. Highly recommended for all users.
+
 = 1.0.4 =
 Major update! Clear log button added. Recommended for all users.
 
@@ -273,9 +378,9 @@ Bot Traffic Shield logs the following information when a bot is blocked (if logg
 *   User-Agent string
 *   IP address
 *   Request timestamp
-*   Requested URL
+*   Bot identifier
 
-All data is stored locally in your WordPress database. No information is sent to external servers. You can disable logging or clear logs at any time from the plugin settings.
+All data is stored locally in your WordPress database. No information is sent to external servers. You can disable logging or clear logs at any time from the plugin settings. Daily statistics are automatically pruned after 60 days to minimize database usage.
 
 == Support ==
 
