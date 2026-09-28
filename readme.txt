@@ -427,9 +427,9 @@ All data is stored locally in your WordPress database. No information is sent to
 == Support ==
 
 For support, feature requests, or bug reports:
-*   Visit our website: [https://monarchwp.com/](https://monarchwp.com/)
-*   Email: info@monarchwp.com
+*   Visit our website: [https://wpsatkhira.com/](https://wpsatkhira.com/)
+*   Email: info@wpsatkhira.com
 
 == Credits ==
 
-Developed by [MonarchWP](https://monarchwp.com/)
+Developed by [WordPress Satkhira](https://wpsatkhira.com/)
