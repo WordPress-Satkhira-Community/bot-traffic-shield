@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Bot Traffic Shield - v1.0.5 Modern Admin Styles
+   Bot Traffic Shield - v1.0.6 Modern Admin Styles
    ========================================================================== */
 
 :root {
@@ -790,4 +790,24 @@ input:checked + .btsld-slider:before {
         width: 100%;
         max-width: none !important;
     }
+}
+
+/* Core search engines (always protected) */
+.btsld-core-se-card {
+    opacity: 0.92;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+.btsld-core-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+.btsld-core-lock .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
 }

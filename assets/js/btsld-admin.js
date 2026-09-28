@@ -1,6 +1,6 @@
 /**
  * Bot Traffic Shield - Admin Dashboard & Chart Engine
- * Version: 1.0.5
+ * Version: 1.0.6
  */
 (function($) {
     'use strict';
@@ -14,6 +14,8 @@
         initCharts();
         initTimeframeSelector();
         initBulkAiActions();
+        initBulkSeActions();
+        initSearchEngineConfirm();
         initClearLogs();
     });
 
@@ -263,6 +265,41 @@
         $('#btsld-deselect-all-ai').on('click', function(e) {
             e.preventDefault();
             $('.btsld-ai-checkbox').prop('checked', false);
+        });
+    }
+
+    /**
+     * Bulk allow / block for regional search engines
+     */
+    function initBulkSeActions() {
+        $('#btsld-select-all-se').on('click', function(e) {
+            e.preventDefault();
+            $('.btsld-se-checkbox').prop('checked', true);
+        });
+
+        $('#btsld-deselect-all-se').on('click', function(e) {
+            e.preventDefault();
+            if (!confirm(btsld_admin.confirm_disable_se.replace('%s', 'all regional / other crawlers'))) {
+                return;
+            }
+            $('.btsld-se-checkbox').prop('checked', false);
+        });
+    }
+
+    /**
+     * Confirm before disabling a regional search engine (blocking its crawler).
+     */
+    function initSearchEngineConfirm() {
+        $(document).on('change', '.btsld-se-checkbox', function() {
+            var $cb = $(this);
+            if ($cb.is(':checked')) {
+                return;
+            }
+            var label = $cb.data('se-label') || 'this crawler';
+            var msg = (btsld_admin.confirm_disable_se || 'Disabling %s will block its crawler from indexing your site — only do this if you do not need that traffic. Continue?').replace('%s', label);
+            if (!confirm(msg)) {
+                $cb.prop('checked', true);
+            }
         });
     }
 

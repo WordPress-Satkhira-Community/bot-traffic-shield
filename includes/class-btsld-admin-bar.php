@@ -3,7 +3,7 @@
  * Admin Bar Toolbar Widget for Bot Traffic Shield.
  *
  * @package BotTrafficShield
- * @version 1.0.5
+ * @version 1.0.6
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -3,7 +3,7 @@
  * Plugin Name:       Bot Traffic Shield
  * Plugin URI:        https://monarchwp.com/bot-traffic-shield
  * Description:       Block AI crawlers and malicious scraper bots. Lightweight, configurable, with real-time charts, AI toggles, logging, and CSV export.
- * Version:           1.0.5
+ * Version:           1.0.6
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            MonarchWP
@@ -22,7 +22,7 @@ final class BTSLD_Bot_Traffic_Shield {
     /**
      * Plugin version.
      */
-    const VERSION = '1.0.5';
+    const VERSION = '1.0.6';
 
     /**
      * Singleton instance.

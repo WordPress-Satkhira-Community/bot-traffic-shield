@@ -1,11 +1,11 @@
 === Bot Traffic Shield - Block Bad Bots and Stop AI Bots Crawlers ===
-Contributors: wpdelower,monarchwp23, zakir021063008
+Contributors: wpdelower,wpsatkhira, zakir021063008
 Donate link: https://monarchwp.com/
 Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,12 +21,20 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 
 *   **Protect Your Content** - Stop AI companies from training their models on your hard work
 *   **Reduce Server Load** - Block unwanted traffic that wastes your bandwidth and resources
-*   **SEO-Safe Blocking** - 35+ legitimate search engines and social media indexers are automatically whitelisted and will NEVER be blocked
-*   **Granular Control** - Enable or disable protection against each AI provider individually (OpenAI, Anthropic, Google, Meta, Apple, ByteDance, and more)
+*   **SEO-Safe by Default** - Google, Bing, and Yahoo are always protected; regional search engines and social crawlers are allowed by default
+*   **Granular Control** - Enable or disable protection against each AI provider and optional regional search engines individually
 *   **Real-Time Analytics** - Beautiful interactive charts showing blocked traffic trends and bot breakdowns
 *   **Take Control** - Decide exactly who can and cannot access your valuable content
 
 ### ✨ Key Features
+
+**Search Engine Rules (NEW in v1.0.6)**
+*   Split whitelist: Core search engines (Google, Bing, Yahoo) are always protected — no toggle, so SEO cannot be broken by accident
+*   Regional and other crawlers (Baidu, Yandex, DuckDuckGo, social previews, SEO tools, monitors) are individually toggleable
+*   Same card UI as AI Crawler Rules, with Allow All / Block All bulk actions
+*   Confirmation warning when disabling a search engine crawler
+*   Disabled regional crawlers are actively blocked (403) and receive `Disallow` rules in robots.txt
+*   Developer filters: `btsld_core_search_engines` and `btsld_search_engine_whitelist`
 
 **Interactive Analytics Dashboard (NEW in v1.0.5)**
 *   Real-time Chart.js powered trend graphs and doughnut charts
@@ -40,12 +48,12 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   Select All / Deselect All bulk actions for quick configuration
 *   Each toggle shows provider name, description, and exact User-Agent strings
 
-**SEO Safety & Search Engine Whitelist (NEW in v1.0.5)**
-*   35+ whitelisted search engines and social media indexers that are NEVER blocked
-*   Includes Googlebot, Bingbot, DuckDuckBot, Baiduspider, YandexBot, Twitterbot, LinkedInBot, Facebook, WhatsApp, Slack, Discord, and more
-*   Explicit `Allow: /` rules added to robots.txt for all whitelisted bots
-*   Developer-friendly `btsld_search_engine_whitelist` filter hook for custom additions
-*   Standard Applebot (Siri/Spotlight) is whitelisted while Applebot-Extended (AI training) remains blockable
+**SEO Safety & Search Engine Whitelist**
+*   Core engines (Google, Bing, Yahoo) are always allowed and cannot be disabled
+*   Regional search engines, social link previews, SEO tools, and monitors are allowed by default and can be blocked per crawler
+*   Explicit `Allow: /` rules in robots.txt for allowed crawlers; `Disallow: /` for blocked ones
+*   Developer-friendly filter hooks for custom additions
+*   Standard Applebot (Siri/Spotlight) is controllable separately from Applebot-Extended (AI training)
 
 **Real-Time Bot Blocking**
 *   Actively blocks bots by their User-Agent on every page request
@@ -86,7 +94,7 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   Master on/off switch for all blocking features
 
 **Modern, Intuitive Interface**
-*   Beautiful 4-tab admin dashboard: Analytics, AI Rules, Settings, Activity Log
+*   Beautiful 5-tab admin dashboard: Analytics, AI Rules, Search Engine Rules, Settings, Activity Log
 *   Interactive Chart.js visualizations with smooth animations
 *   Card-based KPI metrics grid
 *   Modern toggle switches and responsive grid layouts
@@ -115,8 +123,9 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 2. Bot Traffic Shield immediately starts blocking known AI bots
 3. Visit the **Dashboard & Charts** tab to monitor blocked traffic visually
 4. Fine-tune protection in the **AI Crawler Rules** tab by toggling individual providers
-5. Check the **Activity Log** tab for detailed block records
-6. Export logs for analysis or record-keeping
+5. Optionally control regional search engines in the **Search Engine Rules** tab
+6. Check the **Activity Log** tab for detailed block records
+7. Export logs for analysis or record-keeping
 
 **No complicated setup. No API keys. No subscriptions.**
 
@@ -162,13 +171,23 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 *   All AI crawler toggles are **enabled by default** for maximum protection
 *   Logging is **enabled by default** to power the analytics dashboard
 *   Visit the **AI Crawler Rules** tab to customize which AI providers to block
+*   Visit the **Search Engine Rules** tab to allow or block regional search engines (core Google/Bing/Yahoo stay always on)
 *   Check the **Dashboard & Charts** tab to see real-time blocking analytics
 
 == Frequently Asked Questions ==
 
 = Will this affect my SEO or normal search engines? =
 
-**Absolutely not.** Bot Traffic Shield includes a built-in whitelist of 35+ legitimate search engines and social media indexers (Googlebot, Bingbot, DuckDuckBot, Baiduspider, YandexBot, Twitterbot, LinkedInBot, and many more). These whitelisted bots are checked **first** before any blocking logic runs, guaranteeing they are never blocked — even if a custom rule would otherwise match them. Your search rankings will remain completely unaffected.
+**Core search engines stay safe.** Google, Bing, and Yahoo are always protected and cannot be disabled in the admin UI, so your main SEO rankings cannot be broken by mistake. Regional search engines (Baidu, Yandex, DuckDuckGo, and others), social link preview bots, and SEO/monitoring crawlers are allowed by default. You can optionally block any of those from the **Search Engine Rules** tab if you do not need their traffic. Allowed crawlers are checked **first** before any blocking logic runs.
+
+= What's new in version 1.0.6? =
+
+Version 1.0.6 adds controllable Search Engine Rules:
+*   **Core search engines** (Google, Bing, Yahoo) remain always protected with no toggle
+*   **Regional and other crawlers** (Baidu, Yandex, DuckDuckGo, social previews, SEO tools, monitors) are individually toggleable
+*   Confirmation dialog when disabling a search engine crawler
+*   Disabled crawlers are blocked with 403 and `Disallow` in robots.txt
+*   Same UI pattern as the AI Crawler Rules tab
 
 = What's new in version 1.0.5? =
 
@@ -209,6 +228,17 @@ You can enable or disable each provider individually in the **AI Crawler Rules**
 4. Turn off any AI crawler you want to allow
 5. Use **Select All** or **Deselect All** for quick bulk changes
 6. Click **Save AI Crawler Rules**
+
+= How do I block or allow regional search engines? =
+
+1. Go to **Settings > Bot Traffic Shield**
+2. Click on the **Search Engine Rules** tab
+3. Core engines (Google, Bing, Yahoo) are always on and cannot be turned off
+4. Toggle any regional or other crawler off to block it (you will see a confirmation warning)
+5. Use **Allow All** or **Block All** for bulk changes
+6. Click **Save Search Engine Rules**
+
+Disabling a crawler (for example Baidu) blocks that crawler from indexing your site and adds a robots.txt `Disallow` rule. Only do this if you do not need that traffic.
 
 = How do I add a custom bot to the blocklist? =
 
@@ -304,6 +334,15 @@ Disabling logging will stop recording new blocks. To clear existing logs, use th
 
 == Changelog ==
 
+= 1.0.6 (2026-09-27) =
+* **New:** Search Engine Rules tab — split whitelist into Core (Google, Bing, Yahoo; always protected) and Regional/Other (individually toggleable)
+* **New:** Confirmation warning when disabling a regional search engine crawler
+* **New:** Disabled regional crawlers are actively blocked (403) and receive robots.txt Disallow rules
+* **New:** Allow All / Block All bulk actions for regional search engines
+* **New:** Developer filter `btsld_core_search_engines` for the always-protected list
+* **Improved:** robots.txt Allow/Disallow rules follow enabled vs disabled search engine toggles
+* **Improved:** Admin UI now has five tabs including Search Engine Rules
+
 = 1.0.5 (2026-08-23) =
 * **New:** Interactive analytics dashboard powered by Chart.js with trend line and doughnut charts
 * **New:** Switchable chart timeframes (7-day, 14-day, 30-day views)
@@ -356,6 +395,9 @@ Disabling logging will stop recording new blocks. To clear existing logs, use th
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+New Search Engine Rules tab: core search engines (Google, Bing, Yahoo) stay always protected; regional and other crawlers can be toggled with a confirmation warning. Recommended for all users.
 
 = 1.0.5 =
 Major feature update! New interactive analytics dashboard with Chart.js charts, granular AI crawler toggles for each provider, SEO-safe search engine whitelisting (35+ bots protected), and admin toolbar widget. Highly recommended for all users.

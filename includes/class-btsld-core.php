@@ -3,7 +3,7 @@
  * Core protection and data engine for Bot Traffic Shield.
  *
  * @package BotTrafficShield
- * @version 1.0.5
+ * @version 1.0.6
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -155,85 +155,264 @@ class BTSLD_Core {
     }
 
     /**
-     * Search Engine Whitelist — Legitimate crawlers that must NEVER be blocked.
+     * Core search engines — always protected, no admin toggle.
+     * Prevents accidental SEO damage from disabling Google/Bing.
      *
-     * This protects your SEO rankings by ensuring that standard search engine
-     * indexing bots are always allowed through, even if a custom user-agent
-     * pattern or overly broad rule would otherwise match them.
+     * @return array Associative array of token => label.
+     */
+    public static function get_core_search_engines() {
+        $core = array(
+            // Google
+            'Googlebot'             => 'Google Search',
+            'Googlebot-Image'       => 'Google Images',
+            'Googlebot-Video'       => 'Google Video',
+            'Googlebot-News'        => 'Google News',
+            'Storebot-Google'       => 'Google Store',
+            'Google-InspectionTool' => 'Google Search Console',
+            'GoogleOther'           => 'Google Other Services',
+
+            // Microsoft / Bing
+            'bingbot'               => 'Bing Search',
+            'msnbot'                => 'MSN Search',
+            'BingPreview'           => 'Bing Preview',
+            'adidxbot'              => 'Bing Ads',
+
+            // Yahoo
+            'Slurp'                 => 'Yahoo Search',
+        );
+
+        /**
+         * Filter the core (always-protected) search engine list.
+         *
+         * @param array $core Associative array of user-agent token => label.
+         */
+        return apply_filters( 'btsld_core_search_engines', $core );
+    }
+
+    /**
+     * Regional / other search engines & social indexers — individually toggleable.
+     * Same structure as get_registered_ai_bots() for consistent UI/logic.
      *
-     * Developers can modify this list via the 'btsld_search_engine_whitelist' filter.
+     * Toggle ON  = allowed (whitelisted)
+     * Toggle OFF = blocked (added to block tokens + Disallow in robots.txt)
+     *
+     * @return array
+     */
+    public static function get_regional_search_engines() {
+        return array(
+            'duckduckgo' => array(
+                'label'       => 'DuckDuckGo',
+                'provider'    => 'DuckDuckGo',
+                'description' => 'Privacy-focused search engine crawler and favicon bot.',
+                'agents'      => array( 'DuckDuckBot', 'DuckDuckGo-Favicons-Bot' ),
+                'default'     => 1,
+            ),
+            'baidu' => array(
+                'label'       => 'Baidu (Baiduspider)',
+                'provider'    => 'Baidu',
+                'description' => 'Primary search engine in China. Disable only if you do not need Chinese traffic.',
+                'agents'      => array( 'Baiduspider', 'Baiduspider-image' ),
+                'default'     => 1,
+            ),
+            'yandex' => array(
+                'label'       => 'Yandex',
+                'provider'    => 'Yandex',
+                'description' => 'Major search engine in Russia and CIS regions.',
+                'agents'      => array( 'YandexBot', 'YandexImages', 'YandexMobileBot' ),
+                'default'     => 1,
+            ),
+            'sogou' => array(
+                'label'       => 'Sogou',
+                'provider'    => 'Sogou',
+                'description' => 'Chinese search engine crawler.',
+                'agents'      => array( 'Sogou' ),
+                'default'     => 1,
+            ),
+            'exabot' => array(
+                'label'       => 'Exalead (Exabot)',
+                'provider'    => 'Exalead',
+                'description' => 'Exalead search engine crawler.',
+                'agents'      => array( 'Exabot' ),
+                'default'     => 1,
+            ),
+            'internet_archive' => array(
+                'label'       => 'Internet Archive (ia_archiver)',
+                'provider'    => 'Internet Archive',
+                'description' => 'Wayback Machine and archive.org crawler.',
+                'agents'      => array( 'ia_archiver' ),
+                'default'     => 1,
+            ),
+            'applebot' => array(
+                'label'       => 'Applebot (Siri & Spotlight)',
+                'provider'    => 'Apple',
+                'description' => 'Standard Apple search indexing (not Applebot-Extended AI training).',
+                'agents'      => array( 'Applebot' ),
+                'default'     => 1,
+            ),
+            'twitter' => array(
+                'label'       => 'Twitter / X Card Crawler',
+                'provider'    => 'X (Twitter)',
+                'description' => 'Fetches link previews for posts on X/Twitter.',
+                'agents'      => array( 'Twitterbot' ),
+                'default'     => 1,
+            ),
+            'linkedin' => array(
+                'label'       => 'LinkedIn Preview',
+                'provider'    => 'LinkedIn',
+                'description' => 'Fetches link previews for LinkedIn posts.',
+                'agents'      => array( 'LinkedInBot' ),
+                'default'     => 1,
+            ),
+            'pinterest' => array(
+                'label'       => 'Pinterest Crawler',
+                'provider'    => 'Pinterest',
+                'description' => 'Indexes content for Pinterest pins and previews.',
+                'agents'      => array( 'Pinterestbot' ),
+                'default'     => 1,
+            ),
+            'facebook_preview' => array(
+                'label'       => 'Facebook Link Preview',
+                'provider'    => 'Meta',
+                'description' => 'Fetches Open Graph previews when links are shared on Facebook (not Meta AI training bots).',
+                'agents'      => array( 'facebookexternalhit' ),
+                'default'     => 1,
+            ),
+            'whatsapp' => array(
+                'label'       => 'WhatsApp Link Preview',
+                'provider'    => 'Meta',
+                'description' => 'Fetches link previews in WhatsApp chats.',
+                'agents'      => array( 'WhatsApp' ),
+                'default'     => 1,
+            ),
+            'slack' => array(
+                'label'       => 'Slack Link Preview',
+                'provider'    => 'Slack',
+                'description' => 'Fetches link unfurls in Slack messages.',
+                'agents'      => array( 'Slackbot' ),
+                'default'     => 1,
+            ),
+            'discord' => array(
+                'label'       => 'Discord Link Preview',
+                'provider'    => 'Discord',
+                'description' => 'Fetches link embeds in Discord messages.',
+                'agents'      => array( 'Discordbot' ),
+                'default'     => 1,
+            ),
+            'telegram' => array(
+                'label'       => 'Telegram Link Preview',
+                'provider'    => 'Telegram',
+                'description' => 'Fetches link previews in Telegram messages.',
+                'agents'      => array( 'TelegramBot' ),
+                'default'     => 1,
+            ),
+            'ahrefs' => array(
+                'label'       => 'Ahrefs SEO Crawler',
+                'provider'    => 'Ahrefs',
+                'description' => 'SEO tool crawler used for backlink and site audits.',
+                'agents'      => array( 'AhrefsBot' ),
+                'default'     => 1,
+            ),
+            'semrush' => array(
+                'label'       => 'Semrush SEO Crawler',
+                'provider'    => 'Semrush',
+                'description' => 'SEO tool crawler used for site audits and rankings.',
+                'agents'      => array( 'SemrushBot' ),
+                'default'     => 1,
+            ),
+            'majestic' => array(
+                'label'       => 'Majestic SEO Crawler',
+                'provider'    => 'Majestic',
+                'description' => 'SEO tool crawler (MJ12bot).',
+                'agents'      => array( 'MJ12bot' ),
+                'default'     => 1,
+            ),
+            'moz' => array(
+                'label'       => 'Moz SEO Crawler',
+                'provider'    => 'Moz',
+                'description' => 'Moz DotBot and Rogerbot crawlers.',
+                'agents'      => array( 'DotBot', 'rogerbot' ),
+                'default'     => 1,
+            ),
+            'screaming_frog' => array(
+                'label'       => 'Screaming Frog SEO Spider',
+                'provider'    => 'Screaming Frog',
+                'description' => 'Popular desktop SEO crawler used by site owners.',
+                'agents'      => array( 'Screaming Frog' ),
+                'default'     => 1,
+            ),
+            'monitoring' => array(
+                'label'       => 'Uptime & Performance Monitors',
+                'provider'    => 'Monitoring',
+                'description' => 'GTmetrix, Pingdom, and UptimeRobot monitoring bots.',
+                'agents'      => array( 'GTmetrix', 'Pingdom', 'UptimeRobot' ),
+                'default'     => 1,
+            ),
+        );
+    }
+
+    /**
+     * Effective search engine whitelist (core + enabled regional).
+     *
+     * Developers can still modify the final list via 'btsld_search_engine_whitelist'.
      *
      * @return array Associative array of token => label.
      */
     public static function get_search_engine_whitelist() {
-        $whitelist = array(
-            // Google
-            'Googlebot'          => 'Google Search',
-            'Googlebot-Image'    => 'Google Images',
-            'Googlebot-Video'    => 'Google Video',
-            'Googlebot-News'     => 'Google News',
-            'Storebot-Google'    => 'Google Store',
-            'Google-InspectionTool' => 'Google Search Console',
-            'GoogleOther'        => 'Google Other Services',
+        $whitelist = self::get_core_search_engines();
 
-            // Microsoft / Bing
-            'bingbot'            => 'Bing Search',
-            'msnbot'             => 'MSN Search',
-            'BingPreview'        => 'Bing Preview',
-            'adidxbot'           => 'Bing Ads',
+        $settings       = get_option( 'btsld_settings', array() );
+        $se_toggles     = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] )
+            ? $settings['search_engine_toggles']
+            : array();
+        $regional       = self::get_regional_search_engines();
 
-            // Yahoo
-            'Slurp'              => 'Yahoo Search',
+        foreach ( $regional as $key => $info ) {
+            $is_allowed = isset( $se_toggles[ $key ] )
+                ? ( '1' === (string) $se_toggles[ $key ] )
+                : ( ! empty( $info['default'] ) );
 
-            // DuckDuckGo
-            'DuckDuckBot'        => 'DuckDuckGo Search',
-            'DuckDuckGo-Favicons-Bot' => 'DuckDuckGo Favicons',
-
-            // Baidu
-            'Baiduspider'        => 'Baidu Search',
-            'Baiduspider-image'  => 'Baidu Images',
-
-            // Yandex
-            'YandexBot'          => 'Yandex Search',
-            'YandexImages'       => 'Yandex Images',
-            'YandexMobileBot'    => 'Yandex Mobile',
-
-            // Other Major Search Engines
-            'Sogou'              => 'Sogou Search',
-            'Exabot'             => 'Exalead Search',
-            'ia_archiver'        => 'Internet Archive',
-
-            // Social Media Indexers (important for link previews & SEO)
-            'Twitterbot'         => 'Twitter / X Card Crawler',
-            'LinkedInBot'        => 'LinkedIn Preview',
-            'Pinterestbot'       => 'Pinterest Crawler',
-            'facebookexternalhit' => 'Facebook Link Preview',
-            'WhatsApp'           => 'WhatsApp Link Preview',
-            'Slackbot'           => 'Slack Link Preview',
-            'Discordbot'         => 'Discord Link Preview',
-            'TelegramBot'        => 'Telegram Link Preview',
-
-            // Apple (standard search indexing, NOT Applebot-Extended AI training)
-            'Applebot'           => 'Apple Search (Siri & Spotlight)',
-
-            // SEO & Monitoring Tools (commonly used by site owners)
-            'AhrefsBot'          => 'Ahrefs SEO Crawler',
-            'SemrushBot'         => 'Semrush SEO Crawler',
-            'MJ12bot'            => 'Majestic SEO Crawler',
-            'DotBot'             => 'Moz SEO Crawler',
-            'rogerbot'           => 'Moz Rogerbot',
-            'Screaming Frog'     => 'Screaming Frog SEO Spider',
-            'GTmetrix'           => 'GTmetrix Performance',
-            'Pingdom'            => 'Pingdom Uptime Monitor',
-            'UptimeRobot'        => 'UptimeRobot Monitor',
-        );
+            if ( $is_allowed && ! empty( $info['agents'] ) ) {
+                foreach ( $info['agents'] as $agent ) {
+                    $whitelist[ $agent ] = $info['label'];
+                }
+            }
+        }
 
         /**
-         * Filter the search engine whitelist.
+         * Filter the effective search engine whitelist.
          *
          * @param array $whitelist Associative array of user-agent token => label.
          */
         return apply_filters( 'btsld_search_engine_whitelist', $whitelist );
+    }
+
+    /**
+     * User-agent tokens for regional search engines that the admin has disabled
+     * (i.e. should be actively blocked).
+     *
+     * @return array List of user-agent string tokens.
+     */
+    public function get_disabled_search_engine_tokens() {
+        $settings   = get_option( 'btsld_settings', array() );
+        $se_toggles = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] )
+            ? $settings['search_engine_toggles']
+            : array();
+        $regional   = self::get_regional_search_engines();
+        $tokens     = array();
+
+        foreach ( $regional as $key => $info ) {
+            $is_allowed = isset( $se_toggles[ $key ] )
+                ? ( '1' === (string) $se_toggles[ $key ] )
+                : ( ! empty( $info['default'] ) );
+
+            if ( ! $is_allowed && ! empty( $info['agents'] ) ) {
+                foreach ( $info['agents'] as $agent ) {
+                    $tokens[] = $agent;
+                }
+            }
+        }
+
+        return array_unique( array_values( array_filter( $tokens ) ) );
     }
 
     /**
@@ -265,14 +444,19 @@ class BTSLD_Core {
         $settings = get_option( 'btsld_settings', array() );
 
         $defaults = array(
-            'enabled'            => '1',
-            'custom_user_agents' => '',
-            'log_blocked_bots'   => '1',
-            'ai_toggles'         => array(),
+            'enabled'               => '1',
+            'custom_user_agents'    => '',
+            'log_blocked_bots'      => '1',
+            'ai_toggles'            => array(),
+            'search_engine_toggles' => array(),
         );
 
         foreach ( self::get_registered_ai_bots() as $bot_key => $bot_info ) {
             $defaults['ai_toggles'][ $bot_key ] = '1';
+        }
+
+        foreach ( self::get_regional_search_engines() as $se_key => $se_info ) {
+            $defaults['search_engine_toggles'][ $se_key ] = ! empty( $se_info['default'] ) ? '1' : '0';
         }
 
         if ( ! empty( $settings ) && is_array( $settings ) ) {
@@ -280,6 +464,11 @@ class BTSLD_Core {
                 $settings['ai_toggles'] = $defaults['ai_toggles'];
             } else {
                 $settings['ai_toggles'] = wp_parse_args( $settings['ai_toggles'], $defaults['ai_toggles'] );
+            }
+            if ( ! isset( $settings['search_engine_toggles'] ) ) {
+                $settings['search_engine_toggles'] = $defaults['search_engine_toggles'];
+            } else {
+                $settings['search_engine_toggles'] = wp_parse_args( $settings['search_engine_toggles'], $defaults['search_engine_toggles'] );
             }
             $final_settings = wp_parse_args( $settings, $defaults );
         } else {
@@ -326,6 +515,12 @@ class BTSLD_Core {
         if ( ! empty( $custom_bots_raw ) ) {
             $custom_bots = array_filter( array_map( 'trim', explode( "\n", $custom_bots_raw ) ) );
             $active_tokens = array_merge( $active_tokens, $custom_bots );
+        }
+
+        // Regional search engines the admin has disabled are actively blocked.
+        $disabled_se = $this->get_disabled_search_engine_tokens();
+        if ( ! empty( $disabled_se ) ) {
+            $active_tokens = array_merge( $active_tokens, $disabled_se );
         }
 
         return array_unique( array_values( array_filter( $active_tokens ) ) );
