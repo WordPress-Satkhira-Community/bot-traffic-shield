@@ -1,6 +1,6 @@
 === Bot Traffic Shield - Block Bad Bots and Stop AI Bots Crawlers ===
 Contributors: wpdelower,wpsatkhira, zakir021063008
-Donate link: https://monarchwp.com/
+Donate link: https://wpsatkhira.com/donate/
 Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
