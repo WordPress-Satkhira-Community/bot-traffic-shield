@@ -13,11 +13,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BTSLD_Admin {
 
     /**
+     * Slug of the top-level menu and the dashboard page.
+     */
+    const MENU_SLUG = 'bot-traffic-shield';
+
+    /**
      * Singleton instance.
      *
      * @var BTSLD_Admin|null
      */
     private static $_instance = null;
+
+    /**
+     * Hook suffix of the dashboard page.
+     *
+     * @var string
+     */
+    private $page_hook = '';
 
     /**
      * Main Instance.
@@ -37,6 +49,7 @@ class BTSLD_Admin {
     private function __construct() {
         add_action( 'admin_menu', array( $this, 'admin_menu' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
+        add_action( 'admin_init', array( $this, 'redirect_legacy_settings_url' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
         // CSV Export handler
@@ -50,13 +63,38 @@ class BTSLD_Admin {
      * Register Admin Menu.
      */
     public function admin_menu() {
-        add_options_page(
+        add_menu_page(
             __( 'Bot Traffic Shield', 'bot-traffic-shield' ),
-            __( 'Bot Traffic Shield', 'bot-traffic-shield' ),
+            __( 'Bot Shield', 'bot-traffic-shield' ),
             'manage_options',
-            'bot-traffic-shield',
+            self::MENU_SLUG,
+            array( $this, 'admin_page_html' ),
+            'dashicons-shield-alt',
+            76
+        );
+
+        // Premium submenus are added after this one by BTSLD_Premium.
+        $this->page_hook = add_submenu_page(
+            self::MENU_SLUG,
+            __( 'Bot Traffic Shield', 'bot-traffic-shield' ),
+            __( 'Dashboard', 'bot-traffic-shield' ),
+            'manage_options',
+            self::MENU_SLUG,
             array( $this, 'admin_page_html' )
         );
+    }
+
+    /**
+     * Redirect the old Settings > Bot Traffic Shield URL to the top-level menu.
+     */
+    public function redirect_legacy_settings_url() {
+        global $pagenow;
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page routing.
+        if ( 'options-general.php' === $pagenow && isset( $_GET['page'] ) && self::MENU_SLUG === $_GET['page'] ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=' . self::MENU_SLUG ) );
+            exit;
+        }
     }
 
     /**
@@ -65,7 +103,7 @@ class BTSLD_Admin {
      * @param string $hook Page hook suffix.
      */
     public function enqueue_assets( $hook ) {
-        if ( 'settings_page_bot-traffic-shield' !== $hook ) {
+        if ( $this->page_hook !== $hook ) {
             return;
         }
 
@@ -463,6 +501,12 @@ class BTSLD_Admin {
                     </span>
                 </div>
             </header>
+            <hr class="wp-header-end">
+
+            <?php
+            // Outside Settings, WordPress no longer prints the "Settings saved" notice for us.
+            settings_errors();
+            ?>
 
             <!-- Navigation Tabs -->
             <nav class="nav-tab-wrapper btsld-tabs-nav">

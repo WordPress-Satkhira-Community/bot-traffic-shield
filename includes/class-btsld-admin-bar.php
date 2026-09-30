@@ -89,7 +89,7 @@ class BTSLD_Admin_Bar {
         $count_total = (int) get_option( 'btsld_blocked_count', 0 );
 
         // Settings URL base
-        $settings_base = admin_url( 'options-general.php?page=bot-traffic-shield' );
+        $settings_base = admin_url( 'admin.php?page=bot-traffic-shield' );
 
         // Admin bar parent node title
         $title = sprintf(

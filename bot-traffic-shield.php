@@ -81,6 +81,7 @@ final class BTSLD_Bot_Traffic_Shield {
     private function includes() {
         require_once BTSLD_PLUGIN_DIR . 'includes/class-btsld-core.php';
         require_once BTSLD_PLUGIN_DIR . 'includes/class-btsld-admin.php';
+        require_once BTSLD_PLUGIN_DIR . 'includes/class-btsld-premium.php';
 
         // Load admin bar class if present
         if ( file_exists( BTSLD_PLUGIN_DIR . 'includes/class-btsld-admin-bar.php' ) ) {
@@ -101,6 +102,9 @@ final class BTSLD_Bot_Traffic_Shield {
         // Admin components (Dashboard, Settings, Charts)
         if ( is_admin() ) {
             BTSLD_Admin::instance();
+
+            // Premium menus (locked until Bot Traffic Shield Pro is active)
+            BTSLD_Premium::instance();
         }
 
         // Admin bar - initialize when user authentication is available
