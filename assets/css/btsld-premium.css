@@ -132,6 +132,98 @@
     outline: none;
 }
 
+.btsld-pro-switch-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.btsld-pro-switch-list {
+    display: grid;
+}
+
+.btsld-pro-switch-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 24px;
+}
+
+.btsld-ip-filters,
+.btsld-ip-row-form,
+.btsld-ip-table-wrap + .tablenav-pages {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btsld-ip-filters {
+    margin-bottom: 16px;
+}
+
+.btsld-ip-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.btsld-ip-table-wrap .widefat {
+    min-width: 1120px;
+}
+
+.btsld-ip-row-form input[type="text"] {
+    width: 150px;
+}
+
+.btsld-ip-row-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin-top: 6px;
+    white-space: nowrap;
+}
+
+.btsld-ip-remove-form,
+.btsld-ip-delete-form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
+.btsld-ip-delete-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--btsld-danger, #b32d2e);
+    cursor: pointer;
+}
+
+.btsld-ip-delete-button:hover,
+.btsld-ip-delete-button:focus-visible {
+    border-color: var(--btsld-danger, #b32d2e);
+    background: var(--btsld-danger-light, #fcf0f1);
+    outline: none;
+}
+
+.btsld-ip-delete-button .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+.btsld-ip-table-wrap + .tablenav-pages {
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
 .btsld-upgrade-feature-icon {
     color: var(--btsld-primary);
     font-size: 22px;
