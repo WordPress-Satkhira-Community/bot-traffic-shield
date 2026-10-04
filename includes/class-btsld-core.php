@@ -540,6 +540,10 @@ class BTSLD_Core {
             return;
         }
 
+        if ( apply_filters( 'btsld_pro_ip_allowed', false, $this->get_client_ip() ) ) {
+            return;
+        }
+
         // User agent check
         $user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
         if ( empty( $user_agent ) ) {
