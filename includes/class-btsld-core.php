@@ -568,7 +568,8 @@ class BTSLD_Core {
                 if ( ! isset( $settings['log_blocked_bots'] ) || '1' === (string) $settings['log_blocked_bots'] ) {
                     $this->log_blocked_request( $bot_identifier, $user_agent );
                 }
-
+                
+                do_action( 'btsld_request_outcome', 'blocked', 'ai_rule' );
                 status_header( 403 );
                 nocache_headers();
 
