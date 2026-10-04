@@ -172,6 +172,14 @@
     min-width: 1120px;
 }
 
+.btsld-ip-row-form {
+    margin-top: 8px;
+}
+
+.btsld-ip-row-form[hidden] {
+    display: none;
+}
+
 .btsld-ip-row-form input[type="text"] {
     width: 150px;
 }
@@ -180,8 +188,7 @@
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 6px;
     white-space: nowrap;
 }
 
@@ -192,7 +199,7 @@
     margin: 0;
 }
 
-.btsld-ip-delete-button {
+.btsld-ip-icon-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -202,21 +209,40 @@
     border: 1px solid transparent;
     border-radius: 4px;
     background: transparent;
-    color: var(--btsld-danger, #b32d2e);
+    color: var(--btsld-primary, #2271b1);
     cursor: pointer;
+}
+
+.btsld-ip-icon-button:hover,
+.btsld-ip-icon-button:focus-visible,
+.btsld-ip-icon-button[aria-expanded="true"] {
+    border-color: currentColor;
+    background: var(--btsld-primary-light, #f0f6fc);
+    outline: none;
+}
+
+.btsld-ip-icon-button .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+.btsld-ip-remove-button {
+    color: #b45309;
+}
+
+.btsld-ip-remove-button:hover,
+.btsld-ip-remove-button:focus-visible {
+    background: var(--btsld-warning-light, #fcf9e8);
+}
+
+.btsld-ip-delete-button {
+    color: var(--btsld-danger, #b32d2e);
 }
 
 .btsld-ip-delete-button:hover,
 .btsld-ip-delete-button:focus-visible {
-    border-color: var(--btsld-danger, #b32d2e);
     background: var(--btsld-danger-light, #fcf0f1);
-    outline: none;
-}
-
-.btsld-ip-delete-button .dashicons {
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
 }
 
 .btsld-ip-table-wrap + .tablenav-pages {
