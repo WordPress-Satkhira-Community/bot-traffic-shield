@@ -535,29 +535,30 @@ class BTSLD_Core {
     public function block_ai_crawlers() {
         $settings = get_option( 'btsld_settings', array() );
 
-        // Master switch check
+        // Master switch check.
         if ( ! isset( $settings['enabled'] ) || '1' !== (string) $settings['enabled'] ) {
             return;
         }
 
         if ( apply_filters( 'btsld_pro_ip_allowed', false, $this->get_client_ip() ) ) {
+            do_action( 'btsld_request_outcome', 'allowed', 'ip_rule' );
             return;
         }
 
-        // User agent check
-        $user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+        // User agent check.
+        $user_agent = isset( $_SERVER['HTTP_USER_AGENT'] )
+            ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+            : '';
+
         if ( empty( $user_agent ) ) {
             return;
         }
 
-        // ============================================================
-        // SEO SAFETY CHECK — Whitelisted search engines ALWAYS pass.
-        // This runs BEFORE any blocking logic to protect your rankings.
-        // ============================================================
+        // Whitelisted search engines pass before blocking rules.
         $whitelisted_as = $this->is_whitelisted_search_engine( $user_agent );
+
         if ( false !== $whitelisted_as ) {
-            // This is a legitimate search engine or social media indexer.
-            // Allow the request through immediately, regardless of block rules.
+            do_action( 'btsld_request_outcome', 'allowed', 'search_engine_whitelist' );
             return;
         }
 
@@ -568,7 +569,7 @@ class BTSLD_Core {
                 if ( ! isset( $settings['log_blocked_bots'] ) || '1' === (string) $settings['log_blocked_bots'] ) {
                     $this->log_blocked_request( $bot_identifier, $user_agent );
                 }
-                
+
                 do_action( 'btsld_request_outcome', 'blocked', 'ai_rule' );
                 status_header( 403 );
                 nocache_headers();
@@ -581,6 +582,8 @@ class BTSLD_Core {
                 );
             }
         }
+
+        do_action( 'btsld_request_outcome', 'allowed', 'ai_rule' );
     }
 
     /**
