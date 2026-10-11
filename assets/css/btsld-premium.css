@@ -266,3 +266,53 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ---- Grouped premium pages: tabs and section headings ---------------- */
+
+.btsld-group-tabs.nav-tab-wrapper {
+    flex-wrap: wrap;
+}
+
+.btsld-tab-pill {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    background: var(--btsld-primary);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 16px;
+}
+
+.btsld-tab-pill.is-soon {
+    background: var(--btsld-slate-200);
+    color: var(--btsld-slate-600);
+}
+
+.btsld-section-heading {
+    margin: 0 0 20px;
+}
+
+.btsld-section-heading h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    color: var(--btsld-slate-900);
+}
+
+.btsld-section-heading p {
+    margin: 0;
+    color: var(--btsld-slate-600);
+}
+
+.btsld-upgrade-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 28px 0 12px;
+    font-size: 16px;
+    color: var(--btsld-slate-900);
+}
+
+.btsld-upgrade-group .dashicons {
+    color: var(--btsld-primary);
+}
