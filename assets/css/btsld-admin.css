@@ -157,7 +157,7 @@
 }
 
 .btsld-tabs-nav .nav-tab {
-    background: transparent;
+    background: #e3e3e3;
     border: 1px solid transparent;
     color: var(--btsld-slate-600);
     font-weight: 500;
@@ -191,6 +191,36 @@
     color: var(--btsld-primary);
     font-weight: 600;
     box-shadow: var(--btsld-shadow-sm);
+}
+
+/* Upgrade button at the end of the tab bar (free version only).
+   Same amber as the "Upgrade to Pro" admin menu item. */
+.btsld-tabs-nav .btsld-upgrade-tab-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fbbf24;
+    border: 1px solid #fbbf24;
+    color: #1e293b;
+    font-weight: 600;
+    border-radius: var(--btsld-radius-sm);
+    padding: 4px 14px;
+}
+
+.btsld-tabs-nav .btsld-upgrade-tab-btn:hover,
+.btsld-tabs-nav .btsld-upgrade-tab-btn:focus {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #1e293b;
+}
+
+.btsld-tabs-nav .btsld-upgrade-tab-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #1e293b;
+    line-height: 1;
 }
 
 /* Tab Content Visibility Controller */

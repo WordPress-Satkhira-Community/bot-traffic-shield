@@ -525,6 +525,11 @@ class BTSLD_Admin {
                 <a href="#tab-log" class="nav-tab">
                     <span class="dashicons dashicons-list-view"></span> <?php esc_html_e( 'Activity Log', 'bot-traffic-shield' ); ?>
                 </a>
+                <?php if ( class_exists( 'BTSLD_Premium' ) && ! BTSLD_Premium::is_active() ) : ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=' . BTSLD_Premium::UPGRADE_SLUG ) ); ?>" class="button btsld-upgrade-tab-btn">
+                        <span class="dashicons dashicons-star-filled" aria-hidden="true"></span> <?php esc_html_e( 'Upgrade to Pro', 'bot-traffic-shield' ); ?>
+                    </a>
+                <?php endif; ?>
             </nav>
 
             <!-- TAB 1: DASHBOARD & CHARTS -->
