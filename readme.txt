@@ -5,7 +5,7 @@ Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,7 +26,7 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   **Real-Time Analytics** - Beautiful interactive charts showing blocked traffic trends and bot breakdowns
 *   **Take Control** - Decide exactly who can and cannot access your valuable content
 
-### ✨ Key Features
+### ✨ Key Features (Free)
 
 **Search Engine Rules (NEW in v1.0.6)**
 *   Split whitelist: Core search engines (Google, Bing, Yahoo) are always protected — no toggle, so SEO cannot be broken by accident
@@ -108,6 +108,39 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   No external API calls on frontend
 *   60-day automatic stats pruning to keep database lean
 
+### 🚀 Pro Features (Available with Bot Traffic Shield Pro)
+
+Upgrade to **Bot Traffic Shield Pro** for advanced detection, traffic control and automation:
+
+**[Pro] Smart Bot Detection**
+*   Every visitor gets a **Bot Score (0–100)** with classification and confidence level
+*   Multi-signal analysis: headers, request rate, crawling patterns, session behaviour, missing browser headers, sequential URL crawling, 404 patterns and more
+*   Start in **Monitor mode** (log only) → switch to **Enforce mode** (challenge or block)
+*   “Why was this blocked?” reference codes so you can see exactly why a visitor was stopped
+
+**[Pro] Rate Limiting**
+*   Per-IP and per-crawler limits (requests per minute / hour)
+*   Burst limits and automatic cooldowns
+*   Score-aware rules (e.g. high Bot Score + high request rate → temporary block)
+*   Browser challenges for uncertain traffic instead of hard blocks
+
+**[Pro] IP Management**
+*   Temporary or permanent IP blocking with expiration
+*   Allow-list / block-list with notes and reason
+*   Per-IP activity history and quick actions
+
+**[Pro] Advanced Bot Analytics**
+*   AI crawler requests by outcome (allowed, blocked, rate-limited, challenged)
+*   Daily trends, top crawlers, top IPs and top targeted URLs
+*   Extended CSV export of detection and rate-limit data
+
+**[Pro] Notifications & Alerts**
+*   Email, Webhook, Slack, Discord and Telegram notifications
+*   Alerts for high bot volume, per-IP rate spikes, unknown bots and traffic anomalies
+*   Spike / anomaly detection against a learned baseline
+
+Learn more and get Pro at: [https://wpsatkhira.com/](https://wpsatkhira.com/)
+
 ### 🎯 Who Is This Plugin For?
 
 *   **Content Creators** - Protect your articles, tutorials, and creative work
@@ -127,7 +160,7 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 6. Check the **Activity Log** tab for detailed block records
 7. Export logs for analysis or record-keeping
 
-**No complicated setup. No API keys. No subscriptions.**
+**No complicated setup. No API keys. No subscriptions for the free version.**
 
 ### 🔒 Privacy & Security
 
@@ -179,6 +212,14 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 = Will this affect my SEO or normal search engines? =
 
 **Core search engines stay safe.** Google, Bing, and Yahoo are always protected and cannot be disabled in the admin UI, so your main SEO rankings cannot be broken by mistake. Regional search engines (Baidu, Yandex, DuckDuckGo, and others), social link preview bots, and SEO/monitoring crawlers are allowed by default. You can optionally block any of those from the **Search Engine Rules** tab if you do not need their traffic. Allowed crawlers are checked **first** before any blocking logic runs.
+
+= What's new in version 2.0.1? =
+
+Version 2.0.1 prepares the free plugin for the official Pro add-on:
+*   Premium menu placeholders are now visible (locked until Bot Traffic Shield Pro is active)
+*   Cleaner integration point for Pro modules
+*   Version alignment with the Pro release
+*   Documentation updated with full Pro feature overview
 
 = What's new in version 1.0.6? =
 
@@ -269,70 +310,40 @@ The KPI cards at the top show your total blocks, today's blocks, number of activ
 
 The CSV file will download automatically with all blocked bot details, including timestamps, bot names, IP addresses, and User-Agent strings.
 
-= Can I see which bots have been blocked? =
+= What is Bot Traffic Shield Pro? =
 
-**Yes!** The **Activity Log** tab shows:
-*   Date and time of each block (UTC)
-*   Bot name / identifier
-*   IP address
-*   Full User-Agent string
-*   Total count of blocked requests
+Bot Traffic Shield Pro is the official premium add-on that adds:
 
-Logs are paginated for easy browsing (20 entries per page).
+*   Smart behavioral bot detection with Bot Score (0–100)
+*   Rate limiting (per-IP and per-crawler)
+*   Temporary / permanent IP management
+*   Advanced analytics and outcome tracking
+*   Real-time alerts (Email, Slack, Discord, Telegram, Webhooks)
+*   Spike / anomaly detection
 
-= What's the difference between User-Agent blocking and robots.txt? =
+The free version remains fully functional. Pro is optional and unlocks deeper control and automation. Visit [https://wpsatkhira.com/](https://wpsatkhira.com/) for details.
 
-*   **robots.txt** - A polite request that well-behaved bots follow (but can be ignored)
-*   **User-Agent blocking** - A hard block that forcibly denies access with a 403 Forbidden response
+= Does the free version require any subscription or external service? =
 
-This plugin uses **both methods** for maximum protection. The robots.txt is for compliant bots, while User-Agent blocking stops aggressive or malicious bots that ignore robots.txt.
-
-= Does this plugin slow down my website? =
-
-**No.** Bot Traffic Shield is designed to be extremely lightweight:
-*   Runs early in the WordPress load process (priority 1 on `init`)
-*   Minimal database queries
-*   No external API calls on frontend
-*   O(1) stats lookup for the admin bar widget
-*   Automatic 60-day stats pruning
-
-In fact, by blocking unwanted bots, you'll likely see **improved** server performance.
-
-= Can I temporarily disable blocking? =
-
-**Yes.** Simply toggle the **Shield Status** switch to OFF in the **General Settings** tab. You can re-enable it at any time without losing your custom configuration or AI crawler toggles.
-
-= Will I lose my logs if I disable logging? =
-
-Disabling logging will stop recording new blocks. To clear existing logs, use the **Clear All Logs** button in the Activity Log tab. If you want to keep your logs, export them to CSV before clearing.
-
-= Is this plugin compatible with caching plugins? =
-
-**Yes.** Bot Traffic Shield works at a very early stage of WordPress, before most caching plugins, ensuring bots are blocked regardless of cache status.
-
-= Can I use this with other security plugins? =
-
-**Yes.** Bot Traffic Shield focuses specifically on AI bot blocking and works seamlessly alongside other security plugins like Wordfence, Sucuri, iThemes Security, or Cloudflare.
-
-= Can developers customize the search engine whitelist? =
-
-**Yes.** Developers can add or remove whitelisted bots using the `btsld_search_engine_whitelist` filter in their theme's `functions.php`:
-
-`add_filter( 'btsld_search_engine_whitelist', function( $whitelist ) {
-    $whitelist['MyCustomBot'] = 'My Custom Search Engine';
-    return $whitelist;
-} );`
+No. The free version works completely offline on your server. No API keys, no accounts, no subscriptions.
 
 == Screenshots ==
 
-1. Interactive analytics dashboard with Chart.js trend graphs, doughnut charts, and KPI summary cards
-2. Granular AI crawler rules panel with individual toggle switches for each AI provider
-3. General settings page with master switch, logging toggle, and custom blocklist
-4. Activity log with paginated blocked bot entries and CSV export
-5. Admin toolbar widget showing real-time blocked count with quick navigation dropdown
-6. robots.txt output showing whitelisted search engines and blocked AI crawlers
+1. Analytics Dashboard with interactive Chart.js graphs and KPI cards
+2. AI Crawler Rules – granular toggle switches for each AI provider
+3. Search Engine Rules – core engines always protected, regional crawlers toggleable
+4. Activity Log with pagination and CSV export
+5. General Settings and custom User-Agent blocklist
+6. Admin toolbar widget showing blocked count
 
 == Changelog ==
+
+= 2.0.1 (2026-10-11) =
+* **New:** Premium menu placeholders (locked until Bot Traffic Shield Pro is active)
+* **New:** Official integration point for Bot Traffic Shield Pro add-on
+* **New:** Full Pro feature documentation added to this readme so free users can see what’s available
+* **Improved:** Version alignment with the Pro release (2.0.1)
+* **Improved:** Cleaner architecture for future Pro modules
 
 = 1.0.6 (2026-09-27) =
 * **New:** Search Engine Rules tab — split whitelist into Core (Google, Bing, Yahoo; always protected) and Regional/Other (individually toggleable)
@@ -395,6 +406,9 @@ Disabling logging will stop recording new blocks. To clear existing logs, use th
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 2.0.1 =
+Prepares the free plugin for the official Bot Traffic Shield Pro add-on. Premium menus are now visible (locked until Pro is installed). Recommended update for all users who want to unlock advanced bot detection, rate limiting, IP management and alerts later.
 
 = 1.0.6 =
 New Search Engine Rules tab: core search engines (Google, Bing, Yahoo) stay always protected; regional and other crawlers can be toggled with a confirmation warning. Recommended for all users.
