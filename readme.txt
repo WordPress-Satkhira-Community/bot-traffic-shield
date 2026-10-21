@@ -1,5 +1,5 @@
 === Bot Traffic Shield - Block Bad Bots and Stop AI Bots Crawlers ===
-Contributors: wpdelower,wpsatkhira, zakir021063008
+Contributors: wpsatkhira,wpdelower, zakir021063008,jsrasheduzzaman,iqbal511138
 Donate link: https://wpsatkhira.com/donate/
 Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
@@ -112,34 +112,34 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 
 Upgrade to **Bot Traffic Shield Pro** for advanced detection, traffic control and automation:
 
-**[Pro] Smart Bot Detection**
+**[PRO] Smart Bot Detection** — [Get Pro ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 *   Every visitor gets a **Bot Score (0–100)** with classification and confidence level
 *   Multi-signal analysis: headers, request rate, crawling patterns, session behaviour, missing browser headers, sequential URL crawling, 404 patterns and more
 *   Start in **Monitor mode** (log only) → switch to **Enforce mode** (challenge or block)
 *   “Why was this blocked?” reference codes so you can see exactly why a visitor was stopped
 
-**[Pro] Rate Limiting**
+**[PRO] Rate Limiting** — [Get Pro ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 *   Per-IP and per-crawler limits (requests per minute / hour)
 *   Burst limits and automatic cooldowns
 *   Score-aware rules (e.g. high Bot Score + high request rate → temporary block)
 *   Browser challenges for uncertain traffic instead of hard blocks
 
-**[Pro] IP Management**
+**[PRO] IP Management** — [Get Pro ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 *   Temporary or permanent IP blocking with expiration
 *   Allow-list / block-list with notes and reason
 *   Per-IP activity history and quick actions
 
-**[Pro] Advanced Bot Analytics**
+**[PRO] Advanced Bot Analytics** — [Get Pro ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 *   AI crawler requests by outcome (allowed, blocked, rate-limited, challenged)
 *   Daily trends, top crawlers, top IPs and top targeted URLs
 *   Extended CSV export of detection and rate-limit data
 
-**[Pro] Notifications & Alerts**
+**[PRO] Notifications & Alerts** — [Get Pro ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 *   Email, Webhook, Slack, Discord and Telegram notifications
 *   Alerts for high bot volume, per-IP rate spikes, unknown bots and traffic anomalies
 *   Spike / anomaly detection against a learned baseline
 
-Learn more and get Pro at: [https://wpsatkhira.com/](https://wpsatkhira.com/)
+👉 **Ready to take control of your traffic?** [Get Bot Traffic Shield Pro & Pricing ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 
 ### 🎯 Who Is This Plugin For?
 
@@ -321,7 +321,7 @@ Bot Traffic Shield Pro is the official premium add-on that adds:
 *   Real-time alerts (Email, Slack, Discord, Telegram, Webhooks)
 *   Spike / anomaly detection
 
-The free version remains fully functional. Pro is optional and unlocks deeper control and automation. Visit [https://wpsatkhira.com/](https://wpsatkhira.com/) for details.
+The free version remains fully functional. Pro is optional and unlocks deeper control and automation. [Get Bot Traffic Shield Pro & View Pricing ↗](https://wpsatkhira.com/bot-traffic-shield.html#pricing)
 
 = Does the free version require any subscription or external service? =
 

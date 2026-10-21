@@ -95,7 +95,7 @@ class BTSLD_Premium {
      * @return string
      */
     public static function get_upgrade_url() {
-        return (string) apply_filters( 'btsld_upgrade_url', 'https://wpsatkhira.com/bot-traffic-shield-pro/' );
+        return (string) apply_filters( 'btsld_upgrade_url', 'https://wpsatkhira.com/bot-traffic-shield.html#pricing' );
     }
 
     /**
