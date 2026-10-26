@@ -1,5 +1,5 @@
 === Bot Traffic Shield - Block Bad Bots and Stop AI Bots Crawlers ===
-Contributors: wpsatkhira,wpdelower, zakir021063008,jsrasheduzzaman,iqbal511138
+Contributors: wpsatkhira, wpdelower, zakir021063008, jsrasheduzzaman, iqbal511138
 Donate link: https://wpsatkhira.com/donate/
 Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
