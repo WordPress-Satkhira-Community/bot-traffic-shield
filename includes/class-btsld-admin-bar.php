@@ -133,15 +133,17 @@ class BTSLD_Admin_Bar {
             )
         );
 
-        // Submenu: Activity Log
-        $wp_admin_bar->add_node(
-            array(
-                'parent' => 'btsld_admin_bar',
-                'id'     => 'btsld_nav_logs',
-                'title'  => esc_html__( '📋 Blocked Activity Log', 'bot-traffic-shield' ),
-                'href'   => esc_url( $settings_base . '#tab-log' ),
-            )
-        );
+        $settings = get_option( 'btsld_settings', array() );
+        if ( ! isset( $settings['activity_log_enabled'] ) || '1' === (string) $settings['activity_log_enabled'] ) {
+            $wp_admin_bar->add_node(
+                array(
+                    'parent' => 'btsld_admin_bar',
+                    'id'     => 'btsld_nav_logs',
+                    'title'  => esc_html__( '📋 Blocked Activity Log', 'bot-traffic-shield' ),
+                    'href'   => esc_url( $settings_base . '#tab-log' ),
+                )
+            );
+        }
 
         // Submenu: General Settings
         $wp_admin_bar->add_node(

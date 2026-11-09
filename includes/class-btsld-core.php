@@ -447,6 +447,9 @@ class BTSLD_Core {
             'enabled'               => '1',
             'custom_user_agents'    => '',
             'log_blocked_bots'      => '1',
+            'activity_log_enabled'  => '1',
+            'log_max_entries'       => 150,
+            'admin_bar_enabled'     => '1',
             'ai_toggles'            => array(),
             'search_engine_toggles' => array(),
         );
@@ -566,7 +569,9 @@ class BTSLD_Core {
 
         foreach ( $bots_to_block as $bot_identifier ) {
             if ( stripos( $user_agent, $bot_identifier ) !== false ) {
-                if ( ! isset( $settings['log_blocked_bots'] ) || '1' === (string) $settings['log_blocked_bots'] ) {
+                $analytics_enabled    = ! isset( $settings['log_blocked_bots'] ) || '1' === (string) $settings['log_blocked_bots'];
+                $activity_log_enabled = ! isset( $settings['activity_log_enabled'] ) || '1' === (string) $settings['activity_log_enabled'];
+                if ( $analytics_enabled || $activity_log_enabled ) {
                     $this->log_blocked_request( $bot_identifier, $user_agent );
                 }
 
@@ -619,40 +624,46 @@ class BTSLD_Core {
     private function log_blocked_request( $bot_identifier, $full_user_agent ) {
         $timestamp = time();
         $today     = gmdate( 'Y-m-d', $timestamp );
-
-        // 1. Increment total lifetime blocked count
-        $count = (int) get_option( 'btsld_blocked_count', 0 );
-        update_option( 'btsld_blocked_count', $count + 1 );
-
-        // 2. Update daily time-series statistics for charts
-        $daily_stats = get_option( 'btsld_stats_daily', array() );
-        if ( ! is_array( $daily_stats ) ) {
-            $daily_stats = array();
-        }
-
-        if ( ! isset( $daily_stats[ $today ] ) ) {
-            $daily_stats[ $today ] = array(
-                'total'  => 0,
-                'by_bot' => array(),
-            );
-        }
-
-        $daily_stats[ $today ]['total']++;
-
+        $settings  = get_option( 'btsld_settings', array() );
         $bot_clean = sanitize_text_field( $bot_identifier );
-        if ( ! isset( $daily_stats[ $today ]['by_bot'][ $bot_clean ] ) ) {
-            $daily_stats[ $today ]['by_bot'][ $bot_clean ] = 0;
+
+        // Update counters and chart statistics only when analytics are enabled.
+        if ( ! isset( $settings['log_blocked_bots'] ) || '1' === (string) $settings['log_blocked_bots'] ) {
+            $count = (int) get_option( 'btsld_blocked_count', 0 );
+            update_option( 'btsld_blocked_count', $count + 1 );
+
+            $daily_stats = get_option( 'btsld_stats_daily', array() );
+            if ( ! is_array( $daily_stats ) ) {
+                $daily_stats = array();
+            }
+
+            if ( ! isset( $daily_stats[ $today ] ) ) {
+                $daily_stats[ $today ] = array(
+                    'total'  => 0,
+                    'by_bot' => array(),
+                );
+            }
+
+            $daily_stats[ $today ]['total']++;
+
+            if ( ! isset( $daily_stats[ $today ]['by_bot'][ $bot_clean ] ) ) {
+                $daily_stats[ $today ]['by_bot'][ $bot_clean ] = 0;
+            }
+            $daily_stats[ $today ]['by_bot'][ $bot_clean ]++;
+
+            if ( count( $daily_stats ) > 60 ) {
+                ksort( $daily_stats );
+                $daily_stats = array_slice( $daily_stats, -60, null, true );
+            }
+
+            update_option( 'btsld_stats_daily', $daily_stats, false );
         }
-        $daily_stats[ $today ]['by_bot'][ $bot_clean ]++;
 
-        if ( count( $daily_stats ) > 60 ) {
-            ksort( $daily_stats );
-            $daily_stats = array_slice( $daily_stats, -60, null, true );
+        // 3. Update detailed recent event log.
+        if ( isset( $settings['activity_log_enabled'] ) && '0' === (string) $settings['activity_log_enabled'] ) {
+            return;
         }
 
-        update_option( 'btsld_stats_daily', $daily_stats, false );
-
-        // 3. Update detailed recent event log (last 150 entries)
         $log = get_option( 'btsld_blocked_log', array() );
         if ( ! is_array( $log ) ) {
             $log = array();
@@ -667,8 +678,11 @@ class BTSLD_Core {
 
         array_unshift( $log, $log_entry );
 
-        if ( count( $log ) > 150 ) {
-            $log = array_slice( $log, 0, 150 );
+        $max_entries = isset( $settings['log_max_entries'] ) ? absint( $settings['log_max_entries'] ) : 150;
+        $max_entries = min( 10000, max( 1, $max_entries ) );
+
+        if ( count( $log ) > $max_entries ) {
+            $log = array_slice( $log, 0, $max_entries );
         }
 
         update_option( 'btsld_blocked_log', $log, false );

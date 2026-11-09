@@ -195,6 +195,42 @@ class BTSLD_Admin {
         );
 
         add_settings_field(
+            'btsld_activity_log_enabled',
+            __( 'Activity Log', 'bot-traffic-shield' ),
+            array( $this, 'render_field_toggle' ),
+            'bot-traffic-shield-general',
+            'btsld_general_section',
+            array(
+                'id'    => 'activity_log_enabled',
+                'label' => __( 'Store and display detailed blocked-request entries.', 'bot-traffic-shield' ),
+            )
+        );
+
+        add_settings_field(
+            'btsld_log_max_entries',
+            __( 'Maximum Activity Log Entries', 'bot-traffic-shield' ),
+            array( $this, 'render_field_number' ),
+            'bot-traffic-shield-general',
+            'btsld_general_section',
+            array(
+                'id'    => 'log_max_entries',
+                'label' => __( 'Maximum number of recent entries to retain (1–10,000).', 'bot-traffic-shield' ),
+            )
+        );
+
+        add_settings_field(
+            'btsld_admin_bar_enabled',
+            __( 'Admin Bar Menu', 'bot-traffic-shield' ),
+            array( $this, 'render_field_toggle' ),
+            'bot-traffic-shield-general',
+            'btsld_general_section',
+            array(
+                'id'    => 'admin_bar_enabled',
+                'label' => __( 'Show the Bot Traffic Shield menu in the WordPress admin bar.', 'bot-traffic-shield' ),
+            )
+        );
+
+        add_settings_field(
             'btsld_custom_user_agents',
             __( 'Custom Blocklist (User-Agents)', 'bot-traffic-shield' ),
             array( $this, 'render_field_textarea' ),
@@ -216,8 +252,16 @@ class BTSLD_Admin {
     public function sanitize_settings( $input ) {
         $sanitized_input = array();
 
-        $sanitized_input['enabled']          = ( isset( $input['enabled'] ) && '1' === (string) $input['enabled'] ) ? '1' : '0';
-        $sanitized_input['log_blocked_bots'] = ( isset( $input['log_blocked_bots'] ) && '1' === (string) $input['log_blocked_bots'] ) ? '1' : '0';
+        $sanitized_input['enabled']              = ( isset( $input['enabled'] ) && '1' === (string) $input['enabled'] ) ? '1' : '0';
+        $sanitized_input['log_blocked_bots']     = ( isset( $input['log_blocked_bots'] ) && '1' === (string) $input['log_blocked_bots'] ) ? '1' : '0';
+        $sanitized_input['activity_log_enabled'] = ( isset( $input['activity_log_enabled'] ) && '1' === (string) $input['activity_log_enabled'] ) ? '1' : '0';
+        $sanitized_input['admin_bar_enabled']    = ( isset( $input['admin_bar_enabled'] ) && '1' === (string) $input['admin_bar_enabled'] ) ? '1' : '0';
+        $sanitized_input['log_max_entries']      = min( 10000, max( 1, absint( isset( $input['log_max_entries'] ) ? $input['log_max_entries'] : 150 ) ) );
+
+        $log = get_option( 'btsld_blocked_log', array() );
+        if ( is_array( $log ) && count( $log ) > $sanitized_input['log_max_entries'] ) {
+            update_option( 'btsld_blocked_log', array_slice( $log, 0, $sanitized_input['log_max_entries'] ), false );
+        }
 
         if ( isset( $input['custom_user_agents'] ) ) {
             $sanitized_input['custom_user_agents'] = sanitize_textarea_field( $input['custom_user_agents'] );
@@ -288,6 +332,21 @@ class BTSLD_Admin {
         $value    = isset( $settings[ $id ] ) ? $settings[ $id ] : '';
 
         echo '<textarea id="btsld_settings_' . esc_attr( $id ) . '" name="btsld_settings[' . esc_attr( $id ) . ']" rows="5" class="large-text code" placeholder="ExampleBot' . "\n" . 'ScraperAgent">' . esc_textarea( $value ) . '</textarea>';
+        echo '<p class="description">' . esc_html( $args['label'] ) . '</p>';
+    }
+
+    /**
+     * Render number field.
+     *
+     * @param array $args Field arguments.
+     */
+    public function render_field_number( $args ) {
+        $settings = get_option( 'btsld_settings', array() );
+        $id       = $args['id'];
+        $value    = isset( $settings[ $id ] ) ? absint( $settings[ $id ] ) : 150;
+        $value    = min( 10000, max( 1, $value ) );
+
+        echo '<input type="number" id="btsld_settings_' . esc_attr( $id ) . '" name="btsld_settings[' . esc_attr( $id ) . ']" value="' . esc_attr( $value ) . '" min="1" max="10000" class="small-text" />';
         echo '<p class="description">' . esc_html( $args['label'] ) . '</p>';
     }
 
@@ -438,12 +497,13 @@ class BTSLD_Admin {
             return;
         }
 
-        $settings         = get_option( 'btsld_settings', array() );
-        $registered_bots  = BTSLD_Core::get_registered_ai_bots();
-        $ai_toggles       = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
-        $regional_engines = BTSLD_Core::get_regional_search_engines();
-        $se_toggles       = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
-        $core_engines     = BTSLD_Core::get_core_search_engines();
+        $settings            = get_option( 'btsld_settings', array() );
+        $activity_log_enabled = ! isset( $settings['activity_log_enabled'] ) || '1' === (string) $settings['activity_log_enabled'];
+        $registered_bots     = BTSLD_Core::get_registered_ai_bots();
+        $ai_toggles          = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
+        $regional_engines    = BTSLD_Core::get_regional_search_engines();
+        $se_toggles          = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
+        $core_engines        = BTSLD_Core::get_core_search_engines();
 
         $total_blocked = (int) get_option( 'btsld_blocked_count', 0 );
         $daily_stats   = get_option( 'btsld_stats_daily', array() );
@@ -522,9 +582,11 @@ class BTSLD_Admin {
                 <a href="#tab-settings" class="nav-tab">
                     <span class="dashicons dashicons-admin-settings"></span> <?php esc_html_e( 'General Settings', 'bot-traffic-shield' ); ?>
                 </a>
+                <?php if ( $activity_log_enabled ) : ?>
                 <a href="#tab-log" class="nav-tab">
                     <span class="dashicons dashicons-list-view"></span> <?php esc_html_e( 'Activity Log', 'bot-traffic-shield' ); ?>
                 </a>
+                <?php endif; ?>
                 <?php if ( class_exists( 'BTSLD_Premium' ) && ! BTSLD_Premium::is_active() ) : ?>
                     <a href="<?php echo esc_url( BTSLD_Premium::get_upgrade_url() ); ?>" class="button btsld-upgrade-tab-btn" target="_blank" rel="noopener noreferrer">
                         <span class="dashicons dashicons-star-filled" aria-hidden="true"></span> <?php esc_html_e( 'Upgrade to Pro', 'bot-traffic-shield' ); ?>
@@ -605,6 +667,9 @@ class BTSLD_Admin {
                     <?php settings_fields( 'btsld_settings_group' ); ?>
                     <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
                     <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
+                    <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
+                    <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
+                    <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
                     <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
                     <?php foreach ( $regional_engines as $se_key => $se_info ) :
                         $is_allowed = isset( $se_toggles[ $se_key ] ) ? ( '1' === (string) $se_toggles[ $se_key ] ) : true;
@@ -660,6 +725,9 @@ class BTSLD_Admin {
                     <?php settings_fields( 'btsld_settings_group' ); ?>
                     <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
                     <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
+                    <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
+                    <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
+                    <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
                     <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
                     <?php foreach ( $registered_bots as $bot_key => $bot_info ) :
                         $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
@@ -778,7 +846,25 @@ class BTSLD_Admin {
                             <tr>
                                 <th scope="row"><?php esc_html_e( 'Request Logging & Analytics', 'bot-traffic-shield' ); ?></th>
                                 <td>
-                                    <?php $this->render_field_toggle( array( 'id' => 'log_blocked_bots', 'label' => __( 'Save records of blocked crawler hits for the dashboard charts and event log.', 'bot-traffic-shield' ) ) ); ?>
+                                    <?php $this->render_field_toggle( array( 'id' => 'log_blocked_bots', 'label' => __( 'Record blocked crawler requests and update dashboard analytics.', 'bot-traffic-shield' ) ) ); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php esc_html_e( 'Activity Log', 'bot-traffic-shield' ); ?></th>
+                                <td>
+                                    <?php $this->render_field_toggle( array( 'id' => 'activity_log_enabled', 'label' => __( 'Store and display detailed blocked-request entries.', 'bot-traffic-shield' ) ) ); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php esc_html_e( 'Maximum Activity Log Entries', 'bot-traffic-shield' ); ?></th>
+                                <td>
+                                    <?php $this->render_field_number( array( 'id' => 'log_max_entries', 'label' => __( 'Keep between 1 and 10,000 of the most recent entries.', 'bot-traffic-shield' ) ) ); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php esc_html_e( 'Admin Bar Menu', 'bot-traffic-shield' ); ?></th>
+                                <td>
+                                    <?php $this->render_field_toggle( array( 'id' => 'admin_bar_enabled', 'label' => __( 'Show the Bot Traffic Shield menu in the WordPress admin bar.', 'bot-traffic-shield' ) ) ); ?>
                                 </td>
                             </tr>
                             <tr>
@@ -797,6 +883,7 @@ class BTSLD_Admin {
             </div>
 
             <!-- TAB 4: ACTIVITY LOG & CSV EXPORT -->
+            <?php if ( $activity_log_enabled ) : ?>
             <div id="tab-log" class="btsld-tab-content">
                 <div class="btsld-card" id="btsld-log-card">
                     <div class="btsld-card-header">
@@ -867,6 +954,7 @@ class BTSLD_Admin {
                     </form>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
         <?php
     }

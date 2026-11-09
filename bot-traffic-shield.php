@@ -93,6 +93,8 @@ final class BTSLD_Bot_Traffic_Shield {
      * Initialize core logic and hooks.
      */
     private function init() {
+        add_filter( 'plugin_action_links_' . BTSLD_PLUGIN_BASENAME, array( $this, 'plugin_action_links' ) );
+
         // Activation hook to set defaults and migrate settings if upgrading.
         register_activation_hook( BTSLD_PLUGIN_FILE, array( 'BTSLD_Core', 'on_activate' ) );
 
@@ -112,10 +114,36 @@ final class BTSLD_Bot_Traffic_Shield {
     }
 
     /**
+     * Add quick links to the plugin row on the Plugins screen.
+     *
+     * @param string[] $links Existing plugin action links.
+     * @return string[]
+     */
+    public function plugin_action_links( $links ) {
+        $settings_link = sprintf(
+            '<a href="%s">%s</a>',
+            esc_url( admin_url( 'admin.php?page=bot-traffic-shield' ) ),
+            esc_html__( 'Settings', 'bot-traffic-shield' )
+        );
+        $upgrade_link = sprintf(
+            '<a href="%s" style="color: #93003f; font-weight: bold;">%s</a>',
+            esc_url( BTSLD_Premium::get_upgrade_url() ),
+            esc_html__( 'Upgrade to Pro', 'bot-traffic-shield' )
+        );
+
+        array_unshift( $links, $settings_link, $upgrade_link );
+
+        return $links;
+    }
+
+    /**
      * Initialize admin bar after WordPress auth is available.
      */
     public function init_admin_bar() {
-        if ( class_exists( 'BTSLD_Admin_Bar' ) && is_user_logged_in() ) {
+        $settings = get_option( 'btsld_settings', array() );
+        $enabled  = ! isset( $settings['admin_bar_enabled'] ) || '1' === (string) $settings['admin_bar_enabled'];
+
+        if ( $enabled && class_exists( 'BTSLD_Admin_Bar' ) && is_user_logged_in() ) {
             BTSLD_Admin_Bar::instance();
         }
     }
