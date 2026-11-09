@@ -129,7 +129,7 @@ class BTSLD_Admin_Bar {
                 'parent' => 'btsld_admin_bar',
                 'id'     => 'btsld_nav_ai_rules',
                 'title'  => esc_html__( '🤖 AI Crawler Rules', 'bot-traffic-shield' ),
-                'href'   => esc_url( $settings_base . '#tab-ai-crawlers' ),
+                'href'   => esc_url( admin_url( 'admin.php?page=bot-traffic-shield-policies&tab=ai-policies' ) ),
             )
         );
 

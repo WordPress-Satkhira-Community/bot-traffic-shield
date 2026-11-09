@@ -23,14 +23,21 @@
      * Tab Navigation Controller
      */
     function initTabs() {
-        const $tabs = $('.btsld-tabs-nav .nav-tab');
+        const $tabs = $('.btsld-tabs-nav .nav-tab[href^="#"]');
         const $contents = $('.btsld-tab-content');
 
         // Handle URL hash on initial page load (with fallback for old hash anchors)
         let hash = window.location.hash;
         if (hash === '#settings') hash = '#tab-settings';
         if (hash === '#log') hash = '#tab-log';
-        if (hash === '#blocked-bots') hash = '#tab-ai-crawlers';
+        if (hash === '#tab-ai-crawlers' || hash === '#blocked-bots') {
+            window.location.assign('admin.php?page=bot-traffic-shield-policies&tab=ai-policies');
+            return;
+        }
+        if (hash === '#tab-search-engines') {
+            window.location.assign('admin.php?page=bot-traffic-shield-policies&tab=search-engines');
+            return;
+        }
 
         if (hash && $(hash).length) {
             $tabs.removeClass('nav-tab-active');

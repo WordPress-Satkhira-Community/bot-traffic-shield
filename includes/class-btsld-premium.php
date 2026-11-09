@@ -130,6 +130,13 @@ class BTSLD_Premium {
      */
     public static function get_groups() {
         $groups = array(
+            'policies'     => array(
+                'title'      => __( 'Rules & Policies', 'bot-traffic-shield' ),
+                'menu_title' => __( 'Rules & Policies', 'bot-traffic-shield' ),
+                'icon'       => 'dashicons-filter',
+                'tagline'    => __( 'Decide which crawlers may access what.', 'bot-traffic-shield' ),
+                'sections'   => array( 'search-engines', 'ai-policies', 'path-rules', 'rules', 'fake-bots', 'ai-categories', 'ai-presets' ),
+            ),
             'detection'    => array(
                 'title'      => __( 'Bot Detection', 'bot-traffic-shield' ),
                 'menu_title' => __( 'Bot Detection', 'bot-traffic-shield' ),
@@ -143,13 +150,6 @@ class BTSLD_Premium {
                 'icon'       => 'dashicons-performance',
                 'tagline'    => __( 'Rate-limit, challenge and block automated traffic.', 'bot-traffic-shield' ),
                 'sections'   => array( 'rate-limiting', 'ip-management', 'challenges' ),
-            ),
-            'policies'     => array(
-                'title'      => __( 'Rules & Policies', 'bot-traffic-shield' ),
-                'menu_title' => __( 'Rules & Policies', 'bot-traffic-shield' ),
-                'icon'       => 'dashicons-filter',
-                'tagline'    => __( 'Decide which crawlers may access what.', 'bot-traffic-shield' ),
-                'sections'   => array( 'search-engines', 'path-rules', 'rules', 'fake-bots', 'ai-policies', 'ai-categories', 'ai-presets' ),
             ),
             'insights'     => array(
                 'title'      => __( 'Analytics & Reports', 'bot-traffic-shield' ),
@@ -309,8 +309,8 @@ class BTSLD_Premium {
     }
 
     /**
-     * Premium feature sections. Each section is one Pro module; sections are
-     * shown as tabs of the menu group that lists them (see get_groups()).
+     * Premium feature sections and free rule screens. Each section is shown as
+     * a tab of the menu group that lists it (see get_groups()).
      *
      * There is one section per feature in the spec (§2.1–§31); `spec` is its
      * section number. `menu_title` is the tab label. `roadmap` is the Premium release the
@@ -393,6 +393,7 @@ class BTSLD_Premium {
                 'roadmap'     => '1.0',
                 'tagline'     => __( 'Allow or block each search and social crawler on its own.', 'bot-traffic-shield' ),
                 'description' => __( 'Replace the single search/social whitelist with an individual Allow or Block decision for every search engine and social bot.', 'bot-traffic-shield' ),
+                'free'        => true,
                 'features'    => array(
                     __( 'Googlebot, Bingbot, DuckDuckBot, YandexBot, Baiduspider and more', 'bot-traffic-shield' ),
                     __( 'Social bots such as FacebookBot, Twitterbot, LinkedIn and WhatsApp', 'bot-traffic-shield' ),
@@ -595,6 +596,7 @@ class BTSLD_Premium {
                 'roadmap'     => '1.5',
                 'tagline'     => __( 'Decide by purpose: training, search, assistants or agents.', 'bot-traffic-shield' ),
                 'description' => __( 'Replace one global "Block AI" switch with a separate decision for each AI crawler purpose.', 'bot-traffic-shield' ),
+                'free'        => true,
                 'features'    => array(
                     __( 'Allow or block AI Training, AI Search, AI Assistants and AI Agents independently', 'bot-traffic-shield' ),
                 ),
@@ -773,7 +775,7 @@ class BTSLD_Premium {
 
         foreach ( self::get_groups() as $group_key => $group ) {
             $menu_title = esc_html( $group['menu_title'] );
-            if ( ! $is_active ) {
+            if ( ! $is_active && 'policies' !== $group_key ) {
                 $menu_title .= ' <span class="btsld-menu-pro">' . esc_html__( 'PRO', 'bot-traffic-shield' ) . '</span>';
             }
 
@@ -867,7 +869,7 @@ class BTSLD_Premium {
         ?>
         <div class="wrap btsld-wrap">
             <?php
-            self::render_header( $group['title'], $group['tagline'], $group['icon'] );
+            self::render_header( $group['title'], $group['tagline'], $group['icon'], 'policies' === $group_key );
             $this->render_tabs( $group, $active );
 
             self::$rendering_group = $group_key;
@@ -894,10 +896,12 @@ class BTSLD_Premium {
                 <a href="<?php echo esc_url( self::get_page_url( $key ) ); ?>" class="nav-tab<?php echo $key === $active ? ' nav-tab-active' : ''; ?>"<?php echo $key === $active ? ' aria-current="page"' : ''; ?>>
                     <span class="dashicons <?php echo esc_attr( $page['icon'] ); ?>" aria-hidden="true"></span>
                     <?php echo esc_html( $page['menu_title'] ); ?>
-                    <?php if ( ! $is_active ) : ?>
-                        <span class="btsld-tab-pill"><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span>
-                    <?php elseif ( ! has_action( 'btsld_premium_page_' . $key ) ) : ?>
-                        <span class="btsld-tab-pill is-soon"><?php esc_html_e( 'Soon', 'bot-traffic-shield' ); ?></span>
+                    <?php if ( empty( $page['free'] ) ) : ?>
+                        <?php if ( ! $is_active ) : ?>
+                            <span class="btsld-tab-pill"><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span>
+                        <?php elseif ( ! has_action( 'btsld_premium_page_' . $key ) ) : ?>
+                            <span class="btsld-tab-pill is-soon"><?php esc_html_e( 'Soon', 'bot-traffic-shield' ); ?></span>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </a>
             <?php endforeach; ?>
@@ -906,8 +910,7 @@ class BTSLD_Premium {
     }
 
     /**
-     * Render a premium section: Pro's module if available, otherwise a locked or
-     * coming-soon screen.
+     * Render a free rule screen or a premium section.
      *
      * @param string $key Section key.
      */
@@ -921,6 +924,11 @@ class BTSLD_Premium {
             return;
         }
         $page = $pages[ $key ];
+
+        if ( ! empty( $page['free'] ) ) {
+            BTSLD_Admin::instance()->render_free_rules_page( $key );
+            return;
+        }
 
         if ( self::is_active() && has_action( 'btsld_premium_page_' . $key ) ) {
             /**
@@ -953,11 +961,12 @@ class BTSLD_Premium {
      * Inside a tabbed group page the group already printed the page header, so
      * a section heading is printed instead.
      *
-     * @param string $title    Page title.
-     * @param string $subtitle Subtitle.
-     * @param string $icon     Dashicons class.
+     * @param string $title             Page title.
+     * @param string $subtitle          Subtitle.
+     * @param string $icon              Dashicons class.
+     * @param bool   $hide_pro_badge    Whether to omit the Pro badge.
      */
-    public static function render_header( $title, $subtitle, $icon = 'dashicons-shield-alt' ) {
+    public static function render_header( $title, $subtitle, $icon = 'dashicons-shield-alt', $hide_pro_badge = false ) {
         if ( null !== self::$rendering_group ) {
             ?>
             <div class="btsld-section-heading">
@@ -976,7 +985,7 @@ class BTSLD_Premium {
                     <span class="dashicons <?php echo esc_attr( $icon ); ?>"></span>
                 </div>
                 <div>
-                    <h1><?php echo esc_html( $title ); ?> <span class="btsld-pro-pill"><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span></h1>
+                    <h1><?php echo esc_html( $title ); ?><?php if ( ! $hide_pro_badge ) : ?> <span class="btsld-pro-pill"><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span><?php endif; ?></h1>
                     <p class="btsld-subtitle"><?php echo esc_html( $subtitle ); ?></p>
                 </div>
             </div>

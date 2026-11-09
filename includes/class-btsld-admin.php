@@ -103,7 +103,12 @@ class BTSLD_Admin {
      * @param string $hook Page hook suffix.
      */
     public function enqueue_assets( $hook ) {
-        if ( $this->page_hook !== $hook ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Used only to identify the current admin screen.
+        $page          = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+        $is_dashboard  = $this->page_hook === $hook;
+        $is_policies   = 'bot-traffic-shield-policies' === $page;
+
+        if ( ! $is_dashboard && ! $is_policies ) {
             return;
         }
 
@@ -154,6 +159,185 @@ class BTSLD_Admin {
                 '30' => $chart_data_30,
             ),
         ) );
+    }
+
+    /**
+     * Render a free rule screen inside the Rules & Policies menu group.
+     *
+     * @param string $key Rule screen key.
+     */
+    public function render_free_rules_page( $key ) {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $settings         = get_option( 'btsld_settings', array() );
+        $registered_bots  = BTSLD_Core::get_registered_ai_bots();
+        $ai_toggles       = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
+        $regional_engines = BTSLD_Core::get_regional_search_engines();
+        $se_toggles       = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
+
+        settings_errors();
+
+        if ( 'ai-policies' === $key ) :
+            ?>
+            <div class="btsld-section-heading">
+                <h2><?php esc_html_e( 'AI Crawler Rules', 'bot-traffic-shield' ); ?></h2>
+                <p><?php esc_html_e( 'Enable or disable protection against specific AI crawlers and data brokers.', 'bot-traffic-shield' ); ?></p>
+            </div>
+            <form action="options.php" method="post">
+                <?php settings_fields( 'btsld_settings_group' ); ?>
+                <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
+                <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
+                <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
+                <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
+                <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
+                <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
+                <?php foreach ( $regional_engines as $se_key => $se_info ) :
+                    $is_allowed = isset( $se_toggles[ $se_key ] ) ? ( '1' === (string) $se_toggles[ $se_key ] ) : true;
+                    ?>
+                    <input type="hidden" name="btsld_settings[search_engine_toggles][<?php echo esc_attr( $se_key ); ?>]" value="<?php echo esc_attr( $is_allowed ? '1' : '0' ); ?>" />
+                <?php endforeach; ?>
+
+                <div class="btsld-card">
+                    <div class="btsld-card-header">
+                        <div>
+                            <h2><?php esc_html_e( 'Manage AI Crawlers & Scrapers', 'bot-traffic-shield' ); ?></h2>
+                            <p class="btsld-card-desc"><?php esc_html_e( 'Enable or disable protection against specific AI crawlers and data brokers below.', 'bot-traffic-shield' ); ?></p>
+                        </div>
+                        <div class="btsld-bulk-actions">
+                            <button type="button" id="btsld-select-all-ai" class="button button-secondary"><?php esc_html_e( 'Select All', 'bot-traffic-shield' ); ?></button>
+                            <button type="button" id="btsld-deselect-all-ai" class="button button-secondary"><?php esc_html_e( 'Deselect All', 'bot-traffic-shield' ); ?></button>
+                        </div>
+                    </div>
+                    <div class="btsld-ai-grid">
+                        <?php foreach ( $registered_bots as $bot_key => $bot_info ) :
+                            $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
+                            ?>
+                            <div class="btsld-ai-card">
+                                <div class="btsld-ai-card-top">
+                                    <span class="btsld-ai-provider-badge"><?php echo esc_html( $bot_info['provider'] ); ?></span>
+                                    <label class="btsld-switch">
+                                        <input type="checkbox" class="btsld-ai-checkbox" name="btsld_settings[ai_toggles][<?php echo esc_attr( $bot_key ); ?>]" value="1" <?php checked( $is_active, true ); ?> />
+                                        <span class="btsld-slider"></span>
+                                    </label>
+                                </div>
+                                <h3 class="btsld-ai-title"><?php echo esc_html( $bot_info['label'] ); ?></h3>
+                                <p class="btsld-ai-desc"><?php echo esc_html( $bot_info['description'] ); ?></p>
+                                <div class="btsld-ai-agents">
+                                    <?php foreach ( $bot_info['agents'] as $agent ) : ?>
+                                        <code><?php echo esc_html( $agent ); ?></code>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="btsld-card-footer">
+                        <?php submit_button( __( 'Save AI Crawler Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
+                    </div>
+                </div>
+            </form>
+            <?php
+            return;
+        endif;
+
+        if ( 'search-engines' !== $key ) {
+            return;
+        }
+        ?>
+        <div class="btsld-section-heading">
+            <h2><?php esc_html_e( 'Search Engine Rules', 'bot-traffic-shield' ); ?></h2>
+            <p><?php esc_html_e( 'Choose how regional and other search engine crawlers are handled.', 'bot-traffic-shield' ); ?></p>
+        </div>
+        <form action="options.php" method="post">
+            <?php settings_fields( 'btsld_settings_group' ); ?>
+            <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
+            <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
+            <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
+            <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
+            <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
+            <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
+            <?php foreach ( $registered_bots as $bot_key => $bot_info ) :
+                $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
+                ?>
+                <input type="hidden" name="btsld_settings[ai_toggles][<?php echo esc_attr( $bot_key ); ?>]" value="<?php echo esc_attr( $is_active ? '1' : '0' ); ?>" />
+            <?php endforeach; ?>
+
+            <div class="btsld-card">
+                <div class="btsld-card-header">
+                    <div>
+                        <h2><?php esc_html_e( 'Core Search Engines (Always Protected)', 'bot-traffic-shield' ); ?></h2>
+                        <p class="btsld-card-desc"><?php esc_html_e( 'Google, Bing, and Yahoo are always allowed. There is no toggle so your SEO cannot be broken by accident.', 'bot-traffic-shield' ); ?></p>
+                    </div>
+                </div>
+                <div class="btsld-ai-grid">
+                    <?php
+                    $core_groups = array(
+                        'Google' => array( 'Googlebot', 'Googlebot-Image', 'Googlebot-Video', 'Googlebot-News', 'Storebot-Google', 'Google-InspectionTool', 'GoogleOther' ),
+                        'Bing'   => array( 'bingbot', 'msnbot', 'BingPreview', 'adidxbot' ),
+                        'Yahoo'  => array( 'Slurp' ),
+                    );
+                    foreach ( $core_groups as $group_label => $tokens ) :
+                        ?>
+                        <div class="btsld-ai-card btsld-core-se-card">
+                            <div class="btsld-ai-card-top">
+                                <span class="btsld-ai-provider-badge"><?php echo esc_html( $group_label ); ?></span>
+                                <span class="btsld-core-lock" title="<?php esc_attr_e( 'Always allowed', 'bot-traffic-shield' ); ?>">
+                                    <span class="dashicons dashicons-lock"></span>
+                                    <?php esc_html_e( 'Always on', 'bot-traffic-shield' ); ?>
+                                </span>
+                            </div>
+                            <h3 class="btsld-ai-title"><?php echo esc_html( $group_label ); ?></h3>
+                            <p class="btsld-ai-desc"><?php esc_html_e( 'Protected permanently. Cannot be disabled.', 'bot-traffic-shield' ); ?></p>
+                            <div class="btsld-ai-agents">
+                                <?php foreach ( $tokens as $token ) : ?>
+                                    <code><?php echo esc_html( $token ); ?></code>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="btsld-card" style="margin-top: 20px;">
+                <div class="btsld-card-header">
+                    <div>
+                        <h2><?php esc_html_e( 'Regional & Other Crawlers', 'bot-traffic-shield' ); ?></h2>
+                        <p class="btsld-card-desc"><?php esc_html_e( 'Toggle individual regional search engines and social/SEO crawlers. Disabling a crawler blocks it from indexing your site.', 'bot-traffic-shield' ); ?></p>
+                    </div>
+                    <div class="btsld-bulk-actions">
+                        <button type="button" id="btsld-select-all-se" class="button button-secondary"><?php esc_html_e( 'Allow All', 'bot-traffic-shield' ); ?></button>
+                        <button type="button" id="btsld-deselect-all-se" class="button button-secondary"><?php esc_html_e( 'Block All', 'bot-traffic-shield' ); ?></button>
+                    </div>
+                </div>
+                <div class="btsld-ai-grid">
+                    <?php foreach ( $regional_engines as $se_key => $se_info ) :
+                        $is_allowed = isset( $se_toggles[ $se_key ] ) ? ( '1' === (string) $se_toggles[ $se_key ] ) : true;
+                        ?>
+                        <div class="btsld-ai-card">
+                            <div class="btsld-ai-card-top">
+                                <span class="btsld-ai-provider-badge"><?php echo esc_html( $se_info['provider'] ); ?></span>
+                                <label class="btsld-switch">
+                                    <input type="checkbox" class="btsld-se-checkbox" name="btsld_settings[search_engine_toggles][<?php echo esc_attr( $se_key ); ?>]" value="1" data-se-label="<?php echo esc_attr( $se_info['label'] ); ?>" <?php checked( $is_allowed, true ); ?> />
+                                    <span class="btsld-slider"></span>
+                                </label>
+                            </div>
+                            <h3 class="btsld-ai-title"><?php echo esc_html( $se_info['label'] ); ?></h3>
+                            <p class="btsld-ai-desc"><?php echo esc_html( $se_info['description'] ); ?></p>
+                            <div class="btsld-ai-agents">
+                                <?php foreach ( $se_info['agents'] as $agent ) : ?>
+                                    <code><?php echo esc_html( $agent ); ?></code>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="btsld-card-footer">
+                    <?php submit_button( __( 'Save Search Engine Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
+                </div>
+            </div>
+        </form>
+        <?php
     }
 
     /**
@@ -497,13 +681,12 @@ class BTSLD_Admin {
             return;
         }
 
-        $settings            = get_option( 'btsld_settings', array() );
+        $settings             = get_option( 'btsld_settings', array() );
         $activity_log_enabled = ! isset( $settings['activity_log_enabled'] ) || '1' === (string) $settings['activity_log_enabled'];
         $registered_bots     = BTSLD_Core::get_registered_ai_bots();
         $ai_toggles          = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
         $regional_engines    = BTSLD_Core::get_regional_search_engines();
         $se_toggles          = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
-        $core_engines        = BTSLD_Core::get_core_search_engines();
 
         $total_blocked = (int) get_option( 'btsld_blocked_count', 0 );
         $daily_stats   = get_option( 'btsld_stats_daily', array() );
@@ -572,12 +755,6 @@ class BTSLD_Admin {
             <nav class="nav-tab-wrapper btsld-tabs-nav">
                 <a href="#tab-dashboard" class="nav-tab nav-tab-active">
                     <span class="dashicons dashicons-chart-bar"></span> <?php esc_html_e( 'Dashboard & Charts', 'bot-traffic-shield' ); ?>
-                </a>
-                <a href="#tab-ai-crawlers" class="nav-tab">
-                    <span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'AI Crawler Rules', 'bot-traffic-shield' ); ?>
-                </a>
-                <a href="#tab-search-engines" class="nav-tab">
-                    <span class="dashicons dashicons-search"></span> <?php esc_html_e( 'Search Engine Rules', 'bot-traffic-shield' ); ?>
                 </a>
                 <a href="#tab-settings" class="nav-tab">
                     <span class="dashicons dashicons-admin-settings"></span> <?php esc_html_e( 'General Settings', 'bot-traffic-shield' ); ?>
@@ -659,163 +836,6 @@ class BTSLD_Admin {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- TAB 2: AI CRAWLER RULES -->
-            <div id="tab-ai-crawlers" class="btsld-tab-content">
-                <form action="options.php" method="post">
-                    <?php settings_fields( 'btsld_settings_group' ); ?>
-                    <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
-                    <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
-                    <?php foreach ( $regional_engines as $se_key => $se_info ) :
-                        $is_allowed = isset( $se_toggles[ $se_key ] ) ? ( '1' === (string) $se_toggles[ $se_key ] ) : true;
-                    ?>
-                        <input type="hidden" name="btsld_settings[search_engine_toggles][<?php echo esc_attr( $se_key ); ?>]" value="<?php echo esc_attr( $is_allowed ? '1' : '0' ); ?>" />
-                    <?php endforeach; ?>
-
-                    <div class="btsld-card">
-                        <div class="btsld-card-header">
-                            <div>
-                                <h2><?php esc_html_e( 'Manage AI Crawlers & Scrapers', 'bot-traffic-shield' ); ?></h2>
-                                <p class="btsld-card-desc"><?php esc_html_e( 'Enable or disable protection against specific AI crawlers and data brokers below.', 'bot-traffic-shield' ); ?></p>
-                            </div>
-                            <div class="btsld-bulk-actions">
-                                <button type="button" id="btsld-select-all-ai" class="button button-secondary"><?php esc_html_e( 'Select All', 'bot-traffic-shield' ); ?></button>
-                                <button type="button" id="btsld-deselect-all-ai" class="button button-secondary"><?php esc_html_e( 'Deselect All', 'bot-traffic-shield' ); ?></button>
-                            </div>
-                        </div>
-
-                        <div class="btsld-ai-grid">
-                            <?php foreach ( $registered_bots as $bot_key => $bot_info ) : 
-                                $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
-                            ?>
-                                <div class="btsld-ai-card">
-                                    <div class="btsld-ai-card-top">
-                                        <span class="btsld-ai-provider-badge"><?php echo esc_html( $bot_info['provider'] ); ?></span>
-                                        <label class="btsld-switch">
-                                            <input type="checkbox" class="btsld-ai-checkbox" name="btsld_settings[ai_toggles][<?php echo esc_attr( $bot_key ); ?>]" value="1" <?php checked( $is_active, true ); ?> />
-                                            <span class="btsld-slider"></span>
-                                        </label>
-                                    </div>
-                                    <h3 class="btsld-ai-title"><?php echo esc_html( $bot_info['label'] ); ?></h3>
-                                    <p class="btsld-ai-desc"><?php echo esc_html( $bot_info['description'] ); ?></p>
-                                    <div class="btsld-ai-agents">
-                                        <?php foreach ( $bot_info['agents'] as $agent ) : ?>
-                                            <code><?php echo esc_html( $agent ); ?></code>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-
-                        <div class="btsld-card-footer">
-                            <?php submit_button( __( 'Save AI Crawler Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- TAB: SEARCH ENGINE RULES -->
-            <div id="tab-search-engines" class="btsld-tab-content">
-                <form action="options.php" method="post">
-                    <?php settings_fields( 'btsld_settings_group' ); ?>
-                    <input type="hidden" name="btsld_settings[enabled]" value="<?php echo esc_attr( isset( $settings['enabled'] ) ? $settings['enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[log_blocked_bots]" value="<?php echo esc_attr( isset( $settings['log_blocked_bots'] ) ? $settings['log_blocked_bots'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[activity_log_enabled]" value="<?php echo esc_attr( isset( $settings['activity_log_enabled'] ) ? $settings['activity_log_enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[log_max_entries]" value="<?php echo esc_attr( isset( $settings['log_max_entries'] ) ? $settings['log_max_entries'] : 150 ); ?>" />
-                    <input type="hidden" name="btsld_settings[admin_bar_enabled]" value="<?php echo esc_attr( isset( $settings['admin_bar_enabled'] ) ? $settings['admin_bar_enabled'] : '1' ); ?>" />
-                    <input type="hidden" name="btsld_settings[custom_user_agents]" value="<?php echo esc_textarea( isset( $settings['custom_user_agents'] ) ? $settings['custom_user_agents'] : '' ); ?>" />
-                    <?php foreach ( $registered_bots as $bot_key => $bot_info ) :
-                        $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
-                    ?>
-                        <input type="hidden" name="btsld_settings[ai_toggles][<?php echo esc_attr( $bot_key ); ?>]" value="<?php echo esc_attr( $is_active ? '1' : '0' ); ?>" />
-                    <?php endforeach; ?>
-
-                    <div class="btsld-card">
-                        <div class="btsld-card-header">
-                            <div>
-                                <h2><?php esc_html_e( 'Core Search Engines (Always Protected)', 'bot-traffic-shield' ); ?></h2>
-                                <p class="btsld-card-desc"><?php esc_html_e( 'Google, Bing, and Yahoo are always allowed. There is no toggle so your SEO cannot be broken by accident.', 'bot-traffic-shield' ); ?></p>
-                            </div>
-                        </div>
-                        <div class="btsld-ai-grid">
-                            <?php
-                            $core_groups = array(
-                                'Google' => array( 'Googlebot', 'Googlebot-Image', 'Googlebot-Video', 'Googlebot-News', 'Storebot-Google', 'Google-InspectionTool', 'GoogleOther' ),
-                                'Bing'   => array( 'bingbot', 'msnbot', 'BingPreview', 'adidxbot' ),
-                                'Yahoo'  => array( 'Slurp' ),
-                            );
-                            foreach ( $core_groups as $group_label => $tokens ) :
-                            ?>
-                                <div class="btsld-ai-card btsld-core-se-card">
-                                    <div class="btsld-ai-card-top">
-                                        <span class="btsld-ai-provider-badge"><?php echo esc_html( $group_label ); ?></span>
-                                        <span class="btsld-core-lock" title="<?php esc_attr_e( 'Always allowed', 'bot-traffic-shield' ); ?>">
-                                            <span class="dashicons dashicons-lock"></span>
-                                            <?php esc_html_e( 'Always on', 'bot-traffic-shield' ); ?>
-                                        </span>
-                                    </div>
-                                    <h3 class="btsld-ai-title"><?php echo esc_html( $group_label ); ?></h3>
-                                    <p class="btsld-ai-desc"><?php esc_html_e( 'Protected permanently. Cannot be disabled.', 'bot-traffic-shield' ); ?></p>
-                                    <div class="btsld-ai-agents">
-                                        <?php foreach ( $tokens as $token ) : ?>
-                                            <code><?php echo esc_html( $token ); ?></code>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="btsld-card" style="margin-top: 20px;">
-                        <div class="btsld-card-header">
-                            <div>
-                                <h2><?php esc_html_e( 'Regional & Other Crawlers', 'bot-traffic-shield' ); ?></h2>
-                                <p class="btsld-card-desc"><?php esc_html_e( 'Toggle individual regional search engines and social/SEO crawlers. Disabling a crawler blocks it from indexing your site.', 'bot-traffic-shield' ); ?></p>
-                            </div>
-                            <div class="btsld-bulk-actions">
-                                <button type="button" id="btsld-select-all-se" class="button button-secondary"><?php esc_html_e( 'Allow All', 'bot-traffic-shield' ); ?></button>
-                                <button type="button" id="btsld-deselect-all-se" class="button button-secondary"><?php esc_html_e( 'Block All', 'bot-traffic-shield' ); ?></button>
-                            </div>
-                        </div>
-
-                        <div class="btsld-ai-grid">
-                            <?php foreach ( $regional_engines as $se_key => $se_info ) :
-                                $is_allowed = isset( $se_toggles[ $se_key ] ) ? ( '1' === (string) $se_toggles[ $se_key ] ) : true;
-                            ?>
-                                <div class="btsld-ai-card">
-                                    <div class="btsld-ai-card-top">
-                                        <span class="btsld-ai-provider-badge"><?php echo esc_html( $se_info['provider'] ); ?></span>
-                                        <label class="btsld-switch">
-                                            <input type="checkbox"
-                                                class="btsld-se-checkbox"
-                                                name="btsld_settings[search_engine_toggles][<?php echo esc_attr( $se_key ); ?>]"
-                                                value="1"
-                                                data-se-label="<?php echo esc_attr( $se_info['label'] ); ?>"
-                                                <?php checked( $is_allowed, true ); ?> />
-                                            <span class="btsld-slider"></span>
-                                        </label>
-                                    </div>
-                                    <h3 class="btsld-ai-title"><?php echo esc_html( $se_info['label'] ); ?></h3>
-                                    <p class="btsld-ai-desc"><?php echo esc_html( $se_info['description'] ); ?></p>
-                                    <div class="btsld-ai-agents">
-                                        <?php foreach ( $se_info['agents'] as $agent ) : ?>
-                                            <code><?php echo esc_html( $agent ); ?></code>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-
-                        <div class="btsld-card-footer">
-                            <?php submit_button( __( 'Save Search Engine Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
-                        </div>
-                    </div>
-                </form>
             </div>
 
             <!-- TAB 3: GENERAL SETTINGS -->
