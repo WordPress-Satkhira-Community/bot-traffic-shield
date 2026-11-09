@@ -1,6 +1,6 @@
 /**
  * Bot Traffic Shield - Admin Dashboard & Chart Engine
- * Version: 1.0.6
+ * Version: 2.1.1
  */
 (function($) {
     'use strict';

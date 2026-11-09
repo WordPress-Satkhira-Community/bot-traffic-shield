@@ -9,7 +9,7 @@
  * `btsld_premium_page_{key}` action. Without Pro, a locked preview is shown.
  *
  * @package BotTrafficShield
- * @version 1.0.6
+ * @version 2.1.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

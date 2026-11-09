@@ -5,7 +5,7 @@ Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,7 +94,7 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   Master on/off switch for all blocking features
 
 **Modern, Intuitive Interface**
-*   Beautiful 5-tab admin dashboard: Analytics, AI Rules, Search Engine Rules, Settings, Activity Log
+*   Dashboard with General Settings and Activity Log tabs; free AI and search engine controls are under Rules & Policies
 *   Interactive Chart.js visualizations with smooth animations
 *   Card-based KPI metrics grid
 *   Modern toggle switches and responsive grid layouts
@@ -212,6 +212,14 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 = Will this affect my SEO or normal search engines? =
 
 **Core search engines stay safe.** Google, Bing, and Yahoo are always protected and cannot be disabled in the admin UI, so your main SEO rankings cannot be broken by mistake. Regional search engines (Baidu, Yandex, DuckDuckGo, and others), social link preview bots, and SEO/monitoring crawlers are allowed by default. You can optionally block any of those from the **Search Engine Rules** tab if you do not need their traffic. Allowed crawlers are checked **first** before any blocking logic runs.
+
+= What's new in version 2.1.1? =
+
+Version 2.1.1 improves free-plugin settings and navigation:
+*   **New:** Admin bar menu can be enabled or disabled from General Settings
+*   **New:** Activity logging can be enabled or disabled independently of analytics
+*   **New:** Configure the maximum number of retained activity log entries
+*   **Improved:** Free AI crawler and search engine controls are available under Rules & Policies
 
 = What's new in version 2.0.1? =
 
@@ -338,6 +346,12 @@ No. The free version works completely offline on your server. No API keys, no ac
 
 == Changelog ==
 
+= 2.1.1 (2026-11-09) =
+* **New:** Admin bar menu toggle in General Settings
+* **New:** Independent activity log toggle and configurable maximum retained entries
+* **Improved:** Free AI crawler and search engine rules moved into the Rules & Policies menu
+* **Improved:** Rules & Policies is positioned immediately after Dashboard
+
 = 2.0.1 (2026-10-11) =
 * **New:** Premium menu placeholders (locked until Bot Traffic Shield Pro is active)
 * **New:** Official integration point for Bot Traffic Shield Pro add-on
@@ -406,6 +420,9 @@ No. The free version works completely offline on your server. No API keys, no ac
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 2.1.1 =
+Adds controls for the admin bar menu and activity log retention, and groups the free crawler rules under Rules & Policies. Recommended update for all users.
 
 = 2.0.1 =
 Prepares the free plugin for the official Bot Traffic Shield Pro add-on. Premium menus are now visible (locked until Pro is installed). Recommended update for all users who want to unlock advanced bot detection, rate limiting, IP management and alerts later.

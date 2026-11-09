@@ -3,7 +3,7 @@
  * Admin management, settings, charts, and dashboard interface.
  *
  * @package BotTrafficShield
- * @version 1.0.6
+ * @version 2.1.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

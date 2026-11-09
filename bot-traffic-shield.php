@@ -3,7 +3,7 @@
  * Plugin Name:       Bot Traffic Shield
  * Plugin URI:        https://wpsatkhira.com/bot-traffic-shield
  * Description:       Block AI crawlers and malicious scraper bots. Lightweight, configurable, with real-time charts, AI toggles, logging, and CSV export.
- * Version:           2.0.1
+ * Version:           2.1.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            WordPress Satkhira Community
@@ -22,7 +22,7 @@ final class BTSLD_Bot_Traffic_Shield {
     /**
      * Plugin version.
      */
-    const VERSION = '2.0.1';
+    const VERSION = '2.1.1';
 
     /**
      * Singleton instance.
