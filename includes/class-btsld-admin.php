@@ -57,6 +57,9 @@ class BTSLD_Admin {
 
         // Clear logs AJAX handler
         add_action( 'wp_ajax_btsld_clear_logs', array( $this, 'handle_clear_logs' ) );
+
+        // Live dashboard refresh AJAX handler
+        add_action( 'wp_ajax_btsld_refresh_dashboard', array( $this, 'handle_refresh_dashboard' ) );
     }
 
     /**
@@ -146,11 +149,18 @@ class BTSLD_Admin {
         wp_localize_script( 'btsld-admin-js', 'btsld_admin', array(
             'ajax_url'         => admin_url( 'admin-ajax.php' ),
             'clear_logs_nonce' => wp_create_nonce( 'btsld_clear_logs_nonce' ),
+            'refresh_nonce'    => wp_create_nonce( 'btsld_refresh_dashboard_nonce' ),
             'confirm_clear'    => __( 'Are you sure you want to clear all logs and statistics? This action cannot be undone.', 'bot-traffic-shield' ),
             'clearing'         => __( 'Clearing...', 'bot-traffic-shield' ),
             'clear_logs'       => __( 'Clear All Logs', 'bot-traffic-shield' ),
             'empty_log_msg'    => __( 'No bots have been blocked yet, or logging is disabled.', 'bot-traffic-shield' ),
             'error_msg'        => __( 'An error occurred. Please try again.', 'bot-traffic-shield' ),
+            'refreshing'       => __( 'Refreshing...', 'bot-traffic-shield' ),
+            'refreshed'        => __( 'Updated Just Now', 'bot-traffic-shield' ),
+            'label_requests'   => __( 'Blocked Requests', 'bot-traffic-shield' ),
+            'label_bandwidth'  => __( 'Bandwidth Saved (MB)', 'bot-traffic-shield' ),
+            'unit_requests'    => __( 'bots blocked', 'bot-traffic-shield' ),
+            'unit_bandwidth'   => __( 'MB saved', 'bot-traffic-shield' ),
             /* translators: %s: search engine / crawler name */
             'confirm_disable_se' => __( 'Disabling %s will block its crawler from indexing your site — only do this if you do not need that traffic. Continue?', 'bot-traffic-shield' ),
             'chartData'        => array(
@@ -620,6 +630,107 @@ class BTSLD_Admin {
     }
 
     /**
+     * AJAX handler for live dashboard metrics and chart refresh.
+     */
+    public function handle_refresh_dashboard() {
+        check_ajax_referer( 'btsld_refresh_dashboard_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission denied.', 'bot-traffic-shield' ) ) );
+        }
+
+        $total_blocked  = (int) get_option( 'btsld_blocked_count', 0 );
+        $daily_stats    = get_option( 'btsld_stats_daily', array() );
+        $today_key      = gmdate( 'Y-m-d' );
+        $blocked_today  = isset( $daily_stats[ $today_key ]['total'] ) ? (int) $daily_stats[ $today_key ]['total'] : 0;
+
+        $bw_total_bytes = BTSLD_Core::get_bandwidth_saved_bytes( $total_blocked );
+        $bw_today_bytes = BTSLD_Core::get_bandwidth_saved_bytes( $blocked_today );
+        $queries_saved  = BTSLD_Core::get_queries_saved( $total_blocked );
+
+        $top_bot_name   = 'None';
+        $top_bot_count  = 0;
+        $total_scrapes  = 0;
+        $aggregate_bots = array();
+        if ( ! empty( $daily_stats ) ) {
+            foreach ( $daily_stats as $day ) {
+                if ( ! empty( $day['by_bot'] ) ) {
+                    foreach ( $day['by_bot'] as $b_name => $b_count ) {
+                        $aggregate_bots[ $b_name ] = ( isset( $aggregate_bots[ $b_name ] ) ? $aggregate_bots[ $b_name ] : 0 ) + $b_count;
+                        $total_scrapes += $b_count;
+                    }
+                }
+            }
+            if ( ! empty( $aggregate_bots ) ) {
+                arsort( $aggregate_bots );
+                $top_bot_name  = key( $aggregate_bots );
+                $top_bot_count = current( $aggregate_bots );
+            }
+        }
+
+        $registered_bots = BTSLD_Core::get_registered_ai_bots();
+        $settings        = get_option( 'btsld_settings', array() );
+        $ai_toggles      = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
+        $active_ai_count = 0;
+        foreach ( $registered_bots as $k => $v ) {
+            if ( ! isset( $ai_toggles[ $k ] ) || '1' === (string) $ai_toggles[ $k ] ) {
+                $active_ai_count++;
+            }
+        }
+
+        $all_logs      = get_option( 'btsld_blocked_log', array() );
+        $recent_events = array();
+        if ( is_array( $all_logs ) && ! empty( $all_logs ) ) {
+            $slice = array_slice( $all_logs, 0, 5 );
+            foreach ( $slice as $item ) {
+                $t = isset( $item['time'] ) ? (int) $item['time'] : time();
+                $b = isset( $item['bot'] ) ? $item['bot'] : '';
+                $recent_events[] = array(
+                    'time_ago'   => human_time_diff( $t, time() ) . ' ' . __( 'ago', 'bot-traffic-shield' ),
+                    'time_exact' => gmdate( 'Y-m-d H:i:s UTC', $t ),
+                    'bot'        => $b,
+                    'provider'   => BTSLD_Core::get_bot_provider( $b ),
+                    'ip'         => isset( $item['ip'] ) ? $item['ip'] : '',
+                    'ua'         => isset( $item['user_agent'] ) ? $item['user_agent'] : '',
+                );
+            }
+        }
+
+        // Leaderboard for top bots
+        $leaderboard = array();
+        $top_slice   = array_slice( $aggregate_bots, 0, 5, true );
+        foreach ( $top_slice as $b_name => $b_count ) {
+            $pct = $total_scrapes > 0 ? round( ( $b_count / $total_scrapes ) * 100, 1 ) : 0;
+            $leaderboard[] = array(
+                'name'     => $b_name,
+                'count'    => number_format_i18n( $b_count ),
+                'percent'  => $pct,
+                'provider' => BTSLD_Core::get_bot_provider( $b_name ),
+            );
+        }
+
+        wp_send_json_success( array(
+            'total_blocked'         => number_format_i18n( $total_blocked ),
+            'blocked_today'         => number_format_i18n( $blocked_today ),
+            'bandwidth_saved_total' => BTSLD_Core::format_bandwidth( $bw_total_bytes ),
+            'bandwidth_saved_today' => BTSLD_Core::format_bandwidth( $bw_today_bytes ),
+            'queries_saved_total'   => BTSLD_Core::format_compact_number( $queries_saved ),
+            'active_ai_count'       => $active_ai_count,
+            'registered_bots_total' => count( $registered_bots ),
+            'top_bot_name'          => $top_bot_name,
+            'top_bot_provider'      => BTSLD_Core::get_bot_provider( $top_bot_name ),
+            'top_bot_percent'       => $total_scrapes > 0 ? round( ( $top_bot_count / $total_scrapes ) * 100, 1 ) : 0,
+            'chart_data'            => array(
+                '7'  => BTSLD_Core::get_chart_data( 7 ),
+                '14' => BTSLD_Core::get_chart_data( 14 ),
+                '30' => BTSLD_Core::get_chart_data( 30 ),
+            ),
+            'recent_events'         => $recent_events,
+            'leaderboard'           => $leaderboard,
+        ) );
+    }
+
+    /**
      * Get paginated logs.
      *
      * @param int $per_page Page limit.
@@ -682,16 +793,21 @@ class BTSLD_Admin {
         }
 
         $settings             = get_option( 'btsld_settings', array() );
+        $is_shield_enabled    = ! isset( $settings['enabled'] ) || '1' === (string) $settings['enabled'];
         $activity_log_enabled = ! isset( $settings['activity_log_enabled'] ) || '1' === (string) $settings['activity_log_enabled'];
-        $registered_bots     = BTSLD_Core::get_registered_ai_bots();
-        $ai_toggles          = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
-        $regional_engines    = BTSLD_Core::get_regional_search_engines();
-        $se_toggles          = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
+        $registered_bots      = BTSLD_Core::get_registered_ai_bots();
+        $ai_toggles           = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
+        $regional_engines     = BTSLD_Core::get_regional_search_engines();
+        $se_toggles           = isset( $settings['search_engine_toggles'] ) && is_array( $settings['search_engine_toggles'] ) ? $settings['search_engine_toggles'] : array();
 
-        $total_blocked = (int) get_option( 'btsld_blocked_count', 0 );
-        $daily_stats   = get_option( 'btsld_stats_daily', array() );
-        $today_key     = gmdate( 'Y-m-d' );
-        $blocked_today = isset( $daily_stats[ $today_key ]['total'] ) ? (int) $daily_stats[ $today_key ]['total'] : 0;
+        $total_blocked        = (int) get_option( 'btsld_blocked_count', 0 );
+        $daily_stats          = get_option( 'btsld_stats_daily', array() );
+        $today_key            = gmdate( 'Y-m-d' );
+        $blocked_today        = isset( $daily_stats[ $today_key ]['total'] ) ? (int) $daily_stats[ $today_key ]['total'] : 0;
+
+        $bw_total_bytes       = BTSLD_Core::get_bandwidth_saved_bytes( $total_blocked );
+        $bw_today_bytes       = BTSLD_Core::get_bandwidth_saved_bytes( $blocked_today );
+        $queries_saved        = BTSLD_Core::get_queries_saved( $total_blocked );
 
         // Count active AI filters
         $active_ai_count = 0;
@@ -701,22 +817,29 @@ class BTSLD_Admin {
             }
         }
 
-        // Find top scraper
-        $top_bot_name = 'None';
+        // Aggregate bots and determine top scraper
+        $top_bot_name   = 'None';
+        $top_bot_count  = 0;
+        $total_scrapes  = 0;
+        $aggregate_bots = array();
         if ( ! empty( $daily_stats ) ) {
-            $aggregate_bots = array();
             foreach ( $daily_stats as $day ) {
                 if ( ! empty( $day['by_bot'] ) ) {
                     foreach ( $day['by_bot'] as $b_name => $b_count ) {
                         $aggregate_bots[ $b_name ] = ( isset( $aggregate_bots[ $b_name ] ) ? $aggregate_bots[ $b_name ] : 0 ) + $b_count;
+                        $total_scrapes += $b_count;
                     }
                 }
             }
             if ( ! empty( $aggregate_bots ) ) {
                 arsort( $aggregate_bots );
-                $top_bot_name = key( $aggregate_bots );
+                $top_bot_name  = key( $aggregate_bots );
+                $top_bot_count = current( $aggregate_bots );
             }
         }
+
+        $top_bot_percent = $total_scrapes > 0 ? round( ( $top_bot_count / $total_scrapes ) * 100, 1 ) : 0;
+        $top_leaderboard = array_slice( $aggregate_bots, 0, 5, true );
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pagination query parameter.
         $current_page   = isset( $_GET['log_page'] ) ? max( 1, absint( wp_unslash( $_GET['log_page'] ) ) ) : 1;
@@ -724,6 +847,10 @@ class BTSLD_Admin {
         $all_logs       = get_option( 'btsld_blocked_log', array() );
         $total_logs     = is_array( $all_logs ) ? count( $all_logs ) : 0;
         $paginated_logs = $this->get_paginated_logs( $per_page, $current_page );
+        $recent_feed    = is_array( $all_logs ) ? array_slice( $all_logs, 0, 5 ) : array();
+
+        // 7-day data for summary cards
+        $initial_7d = BTSLD_Core::get_chart_data( 7 );
         ?>
 
         <div class="wrap btsld-wrap">
@@ -738,9 +865,9 @@ class BTSLD_Admin {
                     </div>
                 </div>
                 <div class="btsld-header-right">
-                    <span class="btsld-status-badge <?php echo ( isset( $settings['enabled'] ) && '1' === (string) $settings['enabled'] ) ? 'status-active' : 'status-inactive'; ?>">
+                    <span class="btsld-status-badge <?php echo $is_shield_enabled ? 'status-active' : 'status-inactive'; ?>" id="btsld-header-status-badge">
                         <span class="status-dot"></span>
-                        <?php echo ( isset( $settings['enabled'] ) && '1' === (string) $settings['enabled'] ) ? esc_html__( 'Shield Active', 'bot-traffic-shield' ) : esc_html__( 'Shield Paused', 'bot-traffic-shield' ); ?>
+                        <?php echo $is_shield_enabled ? esc_html__( 'Shield Active', 'bot-traffic-shield' ) : esc_html__( 'Shield Paused', 'bot-traffic-shield' ); ?>
                     </span>
                 </div>
             </header>
@@ -773,72 +900,337 @@ class BTSLD_Admin {
 
             <!-- TAB 1: DASHBOARD & CHARTS -->
             <div id="tab-dashboard" class="btsld-tab-content btsld-tab-active">
-                <!-- KPI Metrics Cards -->
+
+                <!-- System Health & Status Bar -->
+                <div class="btsld-health-ribbon">
+                    <div class="btsld-health-ribbon-left">
+                        <span class="btsld-ribbon-item">
+                            <span class="btsld-status-indicator <?php echo $is_shield_enabled ? 'status-online' : 'status-offline'; ?>"></span>
+                            <strong><?php esc_html_e( 'Protection:', 'bot-traffic-shield' ); ?></strong>
+                            <span class="btsld-ribbon-val"><?php echo $is_shield_enabled ? esc_html__( 'Active & Blocking', 'bot-traffic-shield' ) : esc_html__( 'Paused', 'bot-traffic-shield' ); ?></span>
+                        </span>
+                        <span class="btsld-ribbon-divider">&bull;</span>
+                        <span class="btsld-ribbon-item">
+                            <span class="dashicons dashicons-yes-alt btsld-icon-success"></span>
+                            <strong><?php esc_html_e( 'SEO Safety:', 'bot-traffic-shield' ); ?></strong>
+                            <span class="btsld-ribbon-val"><?php esc_html_e( 'Google & Bing Safe', 'bot-traffic-shield' ); ?></span>
+                        </span>
+                        <span class="btsld-ribbon-divider">&bull;</span>
+                        <span class="btsld-ribbon-item">
+                            <span class="dashicons dashicons-cloud-saved btsld-icon-emerald"></span>
+                            <strong><?php esc_html_e( 'Bandwidth Saved:', 'bot-traffic-shield' ); ?></strong>
+                            <span class="btsld-ribbon-val" id="btsld-ribbon-bw"><?php echo esc_html( BTSLD_Core::format_bandwidth( $bw_total_bytes ) ); ?></span>
+                        </span>
+                        <span class="btsld-ribbon-divider">&bull;</span>
+                        <span class="btsld-ribbon-item">
+                            <span class="dashicons dashicons-database btsld-icon-cyan"></span>
+                            <strong><?php esc_html_e( 'DB Queries Spared:', 'bot-traffic-shield' ); ?></strong>
+                            <span class="btsld-ribbon-val" id="btsld-ribbon-queries"><?php echo esc_html( BTSLD_Core::format_compact_number( $queries_saved ) ); ?></span>
+                        </span>
+                    </div>
+                    <div class="btsld-health-ribbon-right">
+                        <button type="button" id="btsld-refresh-stats-btn" class="button btsld-btn-refresh" title="<?php esc_attr_e( 'Refresh dashboard statistics', 'bot-traffic-shield' ); ?>">
+                            <span class="dashicons dashicons-update"></span>
+                            <span class="btsld-refresh-label"><?php esc_html_e( 'Refresh Stats', 'bot-traffic-shield' ); ?></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6 Modern KPI Metrics Cards -->
                 <div class="btsld-kpi-grid">
-                    <div class="btsld-kpi-card">
-                        <div class="btsld-kpi-icon icon-purple"><span class="dashicons dashicons-shield"></span></div>
+                    <!-- 1. Total Blocked Requests -->
+                    <div class="btsld-kpi-card btsld-kpi-card-purple">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-purple"><span class="dashicons dashicons-shield"></span></div>
+                            <span class="btsld-trend-badge badge-purple" id="btsld-trend-today">
+                                +<?php echo esc_html( number_format_i18n( $blocked_today ) ); ?> <?php esc_html_e( 'today', 'bot-traffic-shield' ); ?>
+                            </span>
+                        </div>
                         <div class="btsld-kpi-content">
                             <span class="btsld-kpi-title"><?php esc_html_e( 'Total Blocked Requests', 'bot-traffic-shield' ); ?></span>
                             <span class="btsld-kpi-val" id="btsld-blocked-count"><?php echo esc_html( number_format_i18n( $total_blocked ) ); ?></span>
+                            <span class="btsld-kpi-hint"><?php esc_html_e( 'Lifetime crawlers intercepted', 'bot-traffic-shield' ); ?></span>
                         </div>
                     </div>
 
-                    <div class="btsld-kpi-card">
-                        <div class="btsld-kpi-icon icon-blue"><span class="dashicons dashicons-clock"></span></div>
+                    <!-- 2. Bandwidth Saved (NEW FEATURE) -->
+                    <div class="btsld-kpi-card btsld-kpi-card-emerald">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-emerald"><span class="dashicons dashicons-cloud-saved"></span></div>
+                            <span class="btsld-trend-badge badge-emerald" id="btsld-bw-today-badge">
+                                +<?php echo esc_html( BTSLD_Core::format_bandwidth( $bw_today_bytes, 1 ) ); ?> <?php esc_html_e( 'today', 'bot-traffic-shield' ); ?>
+                            </span>
+                        </div>
+                        <div class="btsld-kpi-content">
+                            <span class="btsld-kpi-title"><?php esc_html_e( 'Est. Bandwidth Saved', 'bot-traffic-shield' ); ?></span>
+                            <span class="btsld-kpi-val" id="btsld-bw-total"><?php echo esc_html( BTSLD_Core::format_bandwidth( $bw_total_bytes ) ); ?></span>
+                            <span class="btsld-kpi-hint"><?php esc_html_e( '~2 MB spared per crawler request', 'bot-traffic-shield' ); ?></span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Server Database Queries Spared (NEW FEATURE) -->
+                    <div class="btsld-kpi-card btsld-kpi-card-cyan">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-cyan"><span class="dashicons dashicons-database"></span></div>
+                            <span class="btsld-trend-badge badge-cyan"><?php esc_html_e( 'Server Spared', 'bot-traffic-shield' ); ?></span>
+                        </div>
+                        <div class="btsld-kpi-content">
+                            <span class="btsld-kpi-title"><?php esc_html_e( 'DB Queries Spared', 'bot-traffic-shield' ); ?></span>
+                            <span class="btsld-kpi-val" id="btsld-queries-saved"><?php echo esc_html( BTSLD_Core::format_compact_number( $queries_saved ) ); ?></span>
+                            <span class="btsld-kpi-hint"><?php esc_html_e( 'Bypasses full PHP & MySQL cycles', 'bot-traffic-shield' ); ?></span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Blocked Today (24h) -->
+                    <div class="btsld-kpi-card btsld-kpi-card-blue">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-blue"><span class="dashicons dashicons-clock"></span></div>
+                            <span class="btsld-trend-badge badge-live">
+                                <span class="btsld-pulse-dot"></span> <?php esc_html_e( 'Live 24h', 'bot-traffic-shield' ); ?>
+                            </span>
+                        </div>
                         <div class="btsld-kpi-content">
                             <span class="btsld-kpi-title"><?php esc_html_e( 'Blocked Today (24h)', 'bot-traffic-shield' ); ?></span>
-                            <span class="btsld-kpi-val"><?php echo esc_html( number_format_i18n( $blocked_today ) ); ?></span>
+                            <span class="btsld-kpi-val" id="btsld-blocked-today"><?php echo esc_html( number_format_i18n( $blocked_today ) ); ?></span>
+                            <span class="btsld-kpi-hint"><?php esc_html_e( 'Hits stopped in current window', 'bot-traffic-shield' ); ?></span>
                         </div>
                     </div>
 
-                    <div class="btsld-kpi-card">
-                        <div class="btsld-kpi-icon icon-green"><span class="dashicons dashicons-yes-alt"></span></div>
+                    <!-- 5. Active Protection Rules -->
+                    <div class="btsld-kpi-card btsld-kpi-card-green">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-green"><span class="dashicons dashicons-yes-alt"></span></div>
+                            <span class="btsld-trend-badge badge-green" id="btsld-rules-pct">
+                                <?php echo esc_html( round( ( $active_ai_count / max( 1, count( $registered_bots ) ) ) * 100 ) ); ?>% <?php esc_html_e( 'Armed', 'bot-traffic-shield' ); ?>
+                            </span>
+                        </div>
                         <div class="btsld-kpi-content">
                             <span class="btsld-kpi-title"><?php esc_html_e( 'Active AI Rules', 'bot-traffic-shield' ); ?></span>
-                            <span class="btsld-kpi-val"><?php echo esc_html( $active_ai_count . ' / ' . count( $registered_bots ) ); ?></span>
+                            <span class="btsld-kpi-val" id="btsld-active-rules"><?php echo esc_html( $active_ai_count . ' / ' . count( $registered_bots ) ); ?></span>
+                            <span class="btsld-kpi-hint"><?php esc_html_e( 'AI crawlers & scrapers blocked', 'bot-traffic-shield' ); ?></span>
                         </div>
                     </div>
 
-                    <div class="btsld-kpi-card">
-                        <div class="btsld-kpi-icon icon-orange"><span class="dashicons dashicons-warning"></span></div>
+                    <!-- 6. Top AI Scraper -->
+                    <div class="btsld-kpi-card btsld-kpi-card-orange">
+                        <div class="btsld-kpi-top">
+                            <div class="btsld-kpi-icon icon-orange"><span class="dashicons dashicons-warning"></span></div>
+                            <span class="btsld-trend-badge badge-orange" id="btsld-top-bot-provider">
+                                <?php echo esc_html( BTSLD_Core::get_bot_provider( $top_bot_name ) ); ?>
+                            </span>
+                        </div>
                         <div class="btsld-kpi-content">
-                            <span class="btsld-kpi-title"><?php esc_html_e( 'Top AI Scraper', 'bot-traffic-shield' ); ?></span>
-                            <span class="btsld-kpi-val btsld-kpi-val-sm"><?php echo esc_html( $top_bot_name ); ?></span>
+                            <span class="btsld-kpi-title"><?php esc_html_e( 'Top Scraper Threat', 'bot-traffic-shield' ); ?></span>
+                            <span class="btsld-kpi-val btsld-kpi-val-sm" id="btsld-top-bot"><?php echo esc_html( $top_bot_name ); ?></span>
+                            <span class="btsld-kpi-hint" id="btsld-top-bot-share">
+                                <?php echo $top_bot_percent > 0 ? esc_html( $top_bot_percent . '% ' . __( 'of blocked traffic', 'bot-traffic-shield' ) ) : esc_html__( 'No crawler hits recorded', 'bot-traffic-shield' ); ?>
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts Section -->
+                <!-- Professional Charts Grid -->
                 <div class="btsld-charts-grid">
+                    <!-- Main Trend Chart -->
                     <div class="btsld-card btsld-chart-card btsld-chart-main">
-                        <div class="btsld-card-header">
-                            <div>
-                                <h2><?php esc_html_e( 'Blocked Requests Trend', 'bot-traffic-shield' ); ?></h2>
-                                <p class="btsld-card-desc"><?php esc_html_e( 'Historical view of blocked AI crawler requests.', 'bot-traffic-shield' ); ?></p>
+                        <div class="btsld-card-header btsld-chart-header-enhanced">
+                            <div class="btsld-chart-header-title">
+                                <h2><?php esc_html_e( 'Crawler Traffic & Savings Trend', 'bot-traffic-shield' ); ?></h2>
+                                <p class="btsld-card-desc"><?php esc_html_e( 'Visual analytics of intercepted crawler requests and estimated bandwidth spared.', 'bot-traffic-shield' ); ?></p>
                             </div>
-                            <div class="btsld-timeframe-selector">
-                                <button type="button" class="btsld-tf-btn active" data-range="7"><?php esc_html_e( '7 Days', 'bot-traffic-shield' ); ?></button>
-                                <button type="button" class="btsld-tf-btn" data-range="14"><?php esc_html_e( '14 Days', 'bot-traffic-shield' ); ?></button>
-                                <button type="button" class="btsld-tf-btn" data-range="30"><?php esc_html_e( '30 Days', 'bot-traffic-shield' ); ?></button>
+                            <div class="btsld-chart-controls">
+                                <!-- Metric Switcher -->
+                                <div class="btsld-metric-selector" role="group" aria-label="<?php esc_attr_e( 'Metric Selector', 'bot-traffic-shield' ); ?>">
+                                    <button type="button" class="btsld-metric-btn active" data-metric="requests">
+                                        <span class="dashicons dashicons-shield"></span> <?php esc_html_e( 'Requests', 'bot-traffic-shield' ); ?>
+                                    </button>
+                                    <button type="button" class="btsld-metric-btn" data-metric="bandwidth">
+                                        <span class="dashicons dashicons-cloud"></span> <?php esc_html_e( 'Bandwidth Saved', 'bot-traffic-shield' ); ?>
+                                    </button>
+                                </div>
+                                <!-- Timeframe Selector -->
+                                <div class="btsld-timeframe-selector" role="group" aria-label="<?php esc_attr_e( 'Timeframe Selector', 'bot-traffic-shield' ); ?>">
+                                    <button type="button" class="btsld-tf-btn active" data-range="7"><?php esc_html_e( '7 Days', 'bot-traffic-shield' ); ?></button>
+                                    <button type="button" class="btsld-tf-btn" data-range="14"><?php esc_html_e( '14 Days', 'bot-traffic-shield' ); ?></button>
+                                    <button type="button" class="btsld-tf-btn" data-range="30"><?php esc_html_e( '30 Days', 'bot-traffic-shield' ); ?></button>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Period Stats Summary Ribbon -->
+                        <div class="btsld-chart-summary-bar">
+                            <div class="btsld-summary-pill">
+                                <span class="summary-label"><?php esc_html_e( 'Period Total:', 'bot-traffic-shield' ); ?></span>
+                                <strong class="summary-val" id="btsld-sum-total"><?php echo esc_html( number_format_i18n( $initial_7d['total_period_requests'] ) ); ?> <?php esc_html_e( 'requests', 'bot-traffic-shield' ); ?></strong>
+                            </div>
+                            <div class="btsld-summary-pill">
+                                <span class="summary-label"><?php esc_html_e( 'Daily Average:', 'bot-traffic-shield' ); ?></span>
+                                <strong class="summary-val" id="btsld-sum-avg"><?php echo esc_html( $initial_7d['daily_avg_requests'] ); ?> / <?php esc_html_e( 'day', 'bot-traffic-shield' ); ?></strong>
+                            </div>
+                            <div class="btsld-summary-pill">
+                                <span class="summary-label"><?php esc_html_e( 'Bandwidth Spared:', 'bot-traffic-shield' ); ?></span>
+                                <strong class="summary-val summary-emerald" id="btsld-sum-bw"><?php echo esc_html( $initial_7d['total_period_bandwidth'] ); ?></strong>
+                            </div>
+                            <div class="btsld-summary-pill">
+                                <span class="summary-label"><?php esc_html_e( 'Peak Day:', 'bot-traffic-shield' ); ?></span>
+                                <strong class="summary-val" id="btsld-sum-peak">
+                                    <?php echo ! empty( $initial_7d['peak_day_label'] ) ? esc_html( $initial_7d['peak_day_label'] . ' (' . number_format_i18n( $initial_7d['peak_day_count'] ) . ')' ) : esc_html__( 'None', 'bot-traffic-shield' ); ?>
+                                </strong>
+                            </div>
+                        </div>
+
                         <div class="btsld-chart-wrapper">
                             <canvas id="btsldTrafficChart"></canvas>
                         </div>
                     </div>
 
+                    <!-- Donut & Top Scrapers Breakdown -->
                     <div class="btsld-card btsld-chart-card btsld-chart-donut">
                         <div class="btsld-card-header">
-                            <h2><?php esc_html_e( 'Bot Traffic Breakdown', 'bot-traffic-shield' ); ?></h2>
+                            <div>
+                                <h2><?php esc_html_e( 'Bot Traffic Breakdown', 'bot-traffic-shield' ); ?></h2>
+                                <p class="btsld-card-desc"><?php esc_html_e( 'Share of blocked crawler attempts by bot.', 'bot-traffic-shield' ); ?></p>
+                            </div>
                         </div>
                         <div class="btsld-chart-wrapper doughnut-wrapper">
                             <canvas id="btsldDonutChart"></canvas>
                         </div>
+
+                        <!-- Top Scrapers Leaderboard -->
+                        <div class="btsld-leaderboard-section">
+                            <h3 class="btsld-leaderboard-title"><?php esc_html_e( 'Top Scrapers Leaderboard', 'bot-traffic-shield' ); ?></h3>
+                            <div class="btsld-leaderboard-list" id="btsld-leaderboard-list">
+                                <?php if ( empty( $top_leaderboard ) ) : ?>
+                                    <p class="btsld-no-data-hint"><?php esc_html_e( 'No scraper activity recorded yet.', 'bot-traffic-shield' ); ?></p>
+                                <?php else : ?>
+                                    <?php
+                                    $rank = 1;
+                                    foreach ( $top_leaderboard as $b_name => $b_count ) :
+                                        $pct = $total_scrapes > 0 ? round( ( $b_count / $total_scrapes ) * 100, 1 ) : 0;
+                                        ?>
+                                        <div class="btsld-leaderboard-row">
+                                            <div class="btsld-leaderboard-meta">
+                                                <span class="btsld-leaderboard-rank">#<?php echo esc_html( $rank++ ); ?></span>
+                                                <span class="btsld-leaderboard-name" title="<?php echo esc_attr( $b_name ); ?>"><?php echo esc_html( $b_name ); ?></span>
+                                                <span class="btsld-provider-pill"><?php echo esc_html( BTSLD_Core::get_bot_provider( $b_name ) ); ?></span>
+                                                <span class="btsld-leaderboard-count"><?php echo esc_html( number_format_i18n( $b_count ) ); ?> (<?php echo esc_html( $pct ); ?>%)</span>
+                                            </div>
+                                            <div class="btsld-progress-track">
+                                                <div class="btsld-progress-bar bar-rank-<?php echo esc_attr( min( 5, $rank - 1 ) ); ?>" style="width: <?php echo esc_attr( $pct ); ?>%;"></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- NEW FEATURE: Live Threats Feed (Recent Blocked Bots) -->
+                <div class="btsld-card btsld-recent-threats-card">
+                    <div class="btsld-card-header">
+                        <div>
+                            <h2>
+                                <span class="dashicons dashicons-shield-alt"></span>
+                                <?php esc_html_e( 'Recent Intercepted Bots (Live Feed)', 'bot-traffic-shield' ); ?>
+                            </h2>
+                            <p class="btsld-card-desc"><?php esc_html_e( 'Real-time activity of crawler and scraper requests stopped before loading WordPress.', 'bot-traffic-shield' ); ?></p>
+                        </div>
+                        <?php if ( $activity_log_enabled ) : ?>
+                            <div>
+                                <a href="#tab-log" class="button button-secondary btsld-nav-to-log">
+                                    <span class="dashicons dashicons-list-view"></span>
+                                    <?php esc_html_e( 'View Full Activity Log', 'bot-traffic-shield' ); ?> (<?php echo esc_html( number_format_i18n( $total_logs ) ); ?>) &rarr;
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="btsld-table-responsive" id="btsld-recent-feed-container">
+                        <?php if ( empty( $recent_feed ) ) : ?>
+                            <div class="btsld-empty-state">
+                                <span class="dashicons dashicons-shield"></span>
+                                <h4><?php esc_html_e( 'No Bot Traffic Detected Yet', 'bot-traffic-shield' ); ?></h4>
+                                <p><?php esc_html_e( 'Your website is actively protected. Incoming bot and scraper requests will appear here in real-time as they are intercepted.', 'bot-traffic-shield' ); ?></p>
+                            </div>
+                        <?php else : ?>
+                            <table class="wp-list-table widefat fixed striped btsld-modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;"><?php esc_html_e( 'Time', 'bot-traffic-shield' ); ?></th>
+                                        <th style="width: 180px;"><?php esc_html_e( 'Bot & Provider', 'bot-traffic-shield' ); ?></th>
+                                        <th style="width: 140px;"><?php esc_html_e( 'IP Address', 'bot-traffic-shield' ); ?></th>
+                                        <th><?php esc_html_e( 'User Agent Snippet', 'bot-traffic-shield' ); ?></th>
+                                        <th style="width: 110px; text-align: center;"><?php esc_html_e( 'Action', 'bot-traffic-shield' ); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="btsld-recent-feed-tbody">
+                                    <?php foreach ( $recent_feed as $item ) :
+                                        $item_time = isset( $item['time'] ) ? (int) $item['time'] : time();
+                                        $item_bot  = isset( $item['bot'] ) ? $item['bot'] : '';
+                                        $provider  = BTSLD_Core::get_bot_provider( $item_bot );
+                                        $item_ip   = isset( $item['ip'] ) ? $item['ip'] : '';
+                                        $item_ua   = isset( $item['user_agent'] ) ? $item['user_agent'] : '';
+                                        ?>
+                                        <tr>
+                                            <td class="btsld-time-col">
+                                                <span class="btsld-time-ago"><?php echo esc_html( human_time_diff( $item_time, time() ) . ' ' . __( 'ago', 'bot-traffic-shield' ) ); ?></span>
+                                                <span class="btsld-time-exact"><?php echo esc_html( gmdate( 'H:i:s UTC', $item_time ) ); ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="btsld-bot-badge"><?php echo esc_html( $item_bot ); ?></span>
+                                                <span class="btsld-provider-pill"><?php echo esc_html( $provider ); ?></span>
+                                            </td>
+                                            <td>
+                                                <code class="btsld-ip-code"><?php echo esc_html( $item_ip ); ?></code>
+                                            </td>
+                                            <td class="btsld-ua-col" title="<?php echo esc_attr( $item_ua ); ?>">
+                                                <span class="btsld-ua-text"><?php echo esc_html( $item_ua ); ?></span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <span class="btsld-action-pill status-blocked"><?php esc_html_e( '403 Blocked', 'bot-traffic-shield' ); ?></span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- NEW FEATURE: Security & Resource Insights Cards -->
+                <div class="btsld-insights-grid">
+                    <div class="btsld-insight-card">
+                        <div class="btsld-insight-icon icon-green"><span class="dashicons dashicons-search"></span></div>
+                        <div class="btsld-insight-content">
+                            <h3><?php esc_html_e( 'Zero SEO Risk Guarantee', 'bot-traffic-shield' ); ?></h3>
+                            <p><?php esc_html_e( 'Googlebot, Bingbot, and Yahoo crawlers are hard-coded in the core whitelist and can never be blocked, keeping your organic search rankings 100% safe.', 'bot-traffic-shield' ); ?></p>
+                        </div>
+                    </div>
+
+                    <div class="btsld-insight-card">
+                        <div class="btsld-insight-icon icon-emerald"><span class="dashicons dashicons-performance"></span></div>
+                        <div class="btsld-insight-content">
+                            <h3><?php esc_html_e( 'Resource & Server Savings', 'bot-traffic-shield' ); ?></h3>
+                            <p><?php esc_html_e( 'Crawlers are terminated immediately at priority 1 with a lightweight header (~300 bytes), avoiding database queries, PHP execution, and theme rendering.', 'bot-traffic-shield' ); ?></p>
+                        </div>
+                    </div>
+
+                    <div class="btsld-insight-card">
+                        <div class="btsld-insight-icon icon-blue"><span class="dashicons dashicons-media-spreadsheet"></span></div>
+                        <div class="btsld-insight-content">
+                            <h3><?php esc_html_e( 'Audit & Export Reports', 'bot-traffic-shield' ); ?></h3>
+                            <p><?php esc_html_e( 'Need crawler data for executive reporting or security audits? Download UTF-8 Excel-ready CSV exports anytime from the Activity Log tab.', 'bot-traffic-shield' ); ?></p>
+                            <?php if ( $activity_log_enabled ) : ?>
+                                <a href="#tab-log" class="btsld-link-arrow btsld-nav-to-log"><?php esc_html_e( 'Go to CSV Export', 'bot-traffic-shield' ); ?> &rarr;</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- TAB 3: GENERAL SETTINGS -->
+            <!-- TAB 2: GENERAL SETTINGS -->
             <div id="tab-settings" class="btsld-tab-content">
                 <form action="options.php" method="post">
                     <?php settings_fields( 'btsld_settings_group' ); ?>

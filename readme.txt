@@ -36,10 +36,15 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   Disabled regional crawlers are actively blocked (403) and receive `Disallow` rules in robots.txt
 *   Developer filters: `btsld_core_search_engines` and `btsld_search_engine_whitelist`
 
-**Interactive Analytics Dashboard (NEW in v1.0.5)**
-*   Real-time Chart.js powered trend graphs and doughnut charts
-*   Switchable timeframes: 7-day, 14-day, and 30-day views
-*   KPI summary cards showing total blocks, today's blocks, active rules, and top scraper
+**Interactive Analytics & Bandwidth Dashboard**
+*   Executive-grade real-time Chart.js trend graphs and doughnut visualizations
+*   Dual-metric view: Switch effortlessly between **Blocked Requests** and **Estimated Bandwidth Saved (MB/GB)**
+*   Period summary ribbon displaying total requests, daily average, bandwidth spared, and peak traffic day
+*   Switchable timeframes: 7-day, 14-day, and 30-day historical views
+*   6 KPI summary cards: Total Blocks, Bandwidth Saved, DB Queries Spared, Blocked Today (24h), Active AI Rules, and Top Scraper Threat
+*   Top Scrapers Leaderboard with visual percentage progress bars and provider badges
+*   Live Intercepted Threats Feed directly on the dashboard tab displaying the latest 5 blocked bots in real-time
+*   One-click AJAX Live Refresh button to update all metrics and charts without reloading the page
 *   Bot traffic breakdown showing which AI crawlers hit your site the most
 
 **Granular AI Crawler Toggles (NEW in v1.0.5)**

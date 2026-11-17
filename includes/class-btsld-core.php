@@ -689,6 +689,124 @@ class BTSLD_Core {
     }
 
     /**
+     * Estimated average bandwidth saved per blocked crawler request in bytes.
+     * Based on median web page payload (HTML, JS, CSS, images) according to HTTP Archive (~2 MB).
+     */
+    const ESTIMATED_BYTES_PER_REQUEST = 2097152;
+
+    /**
+     * Estimated average database queries spared per blocked request.
+     * WordPress typically performs 25-50 queries to render a standard front-end page.
+     */
+    const ESTIMATED_QUERIES_PER_REQUEST = 35;
+
+    /**
+     * Format a byte integer into a human-readable string (KB, MB, GB, TB).
+     *
+     * @param int|float $bytes Number of bytes.
+     * @param int       $precision Decimal places.
+     * @return string Formatted byte string.
+     */
+    public static function format_bandwidth( $bytes, $precision = 2 ) {
+        $bytes = max( 0, (float) $bytes );
+        if ( $bytes <= 0 ) {
+            return '0 MB';
+        }
+
+        $units = array( 'B', 'KB', 'MB', 'GB', 'TB', 'PB' );
+        $pow   = floor( log( $bytes ) / log( 1024 ) );
+        $pow   = min( (int) $pow, count( $units ) - 1 );
+        $val   = $bytes / pow( 1024, $pow );
+
+        return round( $val, $precision ) . ' ' . $units[ $pow ];
+    }
+
+    /**
+     * Calculate total bandwidth saved in bytes.
+     *
+     * @param int|null $request_count Number of requests (default null for total blocked count).
+     * @return int Total bytes saved.
+     */
+    public static function get_bandwidth_saved_bytes( $request_count = null ) {
+        if ( is_null( $request_count ) ) {
+            $request_count = (int) get_option( 'btsld_blocked_count', 0 );
+        }
+        $bytes_per_request = (int) apply_filters( 'btsld_bandwidth_per_request', self::ESTIMATED_BYTES_PER_REQUEST );
+        return max( 0, (int) $request_count * $bytes_per_request );
+    }
+
+    /**
+     * Calculate estimated database queries spared.
+     *
+     * @param int|null $request_count Number of requests (default null for total blocked count).
+     * @return int Total DB queries spared.
+     */
+    public static function get_queries_saved( $request_count = null ) {
+        if ( is_null( $request_count ) ) {
+            $request_count = (int) get_option( 'btsld_blocked_count', 0 );
+        }
+        $queries_per_request = (int) apply_filters( 'btsld_queries_per_request', self::ESTIMATED_QUERIES_PER_REQUEST );
+        return max( 0, (int) $request_count * $queries_per_request );
+    }
+
+    /**
+     * Format large numbers into clean compact strings (e.g., 1.2K, 3.4M).
+     *
+     * @param int|float $number
+     * @return string
+     */
+    public static function format_compact_number( $number ) {
+        $number = (float) $number;
+        if ( $number < 1000 ) {
+            return number_format_i18n( (int) $number );
+        }
+        if ( $number < 1000000 ) {
+            return round( $number / 1000, 1 ) . 'K';
+        }
+        return round( $number / 1000000, 2 ) . 'M';
+    }
+
+    /**
+     * Get the vendor / provider for a given bot token or identifier.
+     *
+     * @param string $bot_token
+     * @return string Provider name.
+     */
+    public static function get_bot_provider( $bot_token ) {
+        $bot_clean = strtolower( trim( $bot_token ) );
+
+        $ai_bots = self::get_registered_ai_bots();
+        foreach ( $ai_bots as $key => $info ) {
+            if ( $key === $bot_clean || stripos( $bot_token, $key ) !== false ) {
+                return $info['provider'];
+            }
+            if ( ! empty( $info['agents'] ) ) {
+                foreach ( $info['agents'] as $agent ) {
+                    if ( stripos( $bot_token, $agent ) !== false ) {
+                        return $info['provider'];
+                    }
+                }
+            }
+        }
+
+        $regional = self::get_regional_search_engines();
+        foreach ( $regional as $key => $info ) {
+            if ( $key === $bot_clean || stripos( $bot_token, $key ) !== false ) {
+                return $info['provider'];
+            }
+            if ( ! empty( $info['agents'] ) ) {
+                foreach ( $info['agents'] as $agent ) {
+                    if ( stripos( $bot_token, $agent ) !== false ) {
+                        return $info['provider'];
+                    }
+                }
+            }
+        }
+
+        return __( 'Crawler / Scraper', 'bot-traffic-shield' );
+    }
+
+    /**
      * Get chart data formatted for frontend charting libraries.
      *
      * @param int $days Number of days to retrieve (default 7).
@@ -700,9 +818,12 @@ class BTSLD_Core {
             $daily_stats = array();
         }
 
-        $labels      = array();
-        $series_data = array();
-        $bot_totals  = array();
+        $labels           = array();
+        $series_data      = array();
+        $bandwidth_series = array();
+        $bot_totals       = array();
+
+        $bytes_per_req = (int) apply_filters( 'btsld_bandwidth_per_request', self::ESTIMATED_BYTES_PER_REQUEST );
 
         for ( $i = $days - 1; $i >= 0; $i-- ) {
             $date_key = gmdate( 'Y-m-d', strtotime( "-{$i} days" ) );
@@ -721,15 +842,51 @@ class BTSLD_Core {
                     }
                 }
             }
-            $series_data[] = $day_count;
+            $series_data[]      = $day_count;
+            $bandwidth_series[] = round( ( $day_count * $bytes_per_req ) / ( 1024 * 1024 ), 2 );
         }
 
         arsort( $bot_totals );
 
+        $total_period_requests = array_sum( $series_data );
+        $total_period_bytes    = $total_period_requests * $bytes_per_req;
+        $daily_avg_requests    = $days > 0 ? round( $total_period_requests / $days, 1 ) : 0;
+        $daily_avg_bandwidth   = $days > 0 ? self::format_bandwidth( $total_period_bytes / $days, 1 ) : '0 MB';
+
+        $peak_day_count = ! empty( $series_data ) ? max( $series_data ) : 0;
+        $peak_day_label = '';
+        if ( $peak_day_count > 0 ) {
+            $peak_idx       = array_search( $peak_day_count, $series_data, true );
+            $peak_day_label = isset( $labels[ $peak_idx ] ) ? $labels[ $peak_idx ] : '';
+        }
+
+        // Calculate bot breakdown with percentages and providers
+        $bot_breakdown = array();
+        $all_bot_hits  = array_sum( $bot_totals );
+        $top_bots      = array_slice( $bot_totals, 0, 8, true );
+
+        foreach ( $top_bots as $b_name => $b_count ) {
+            $percent = $all_bot_hits > 0 ? round( ( $b_count / $all_bot_hits ) * 100, 1 ) : 0;
+            $bot_breakdown[] = array(
+                'name'     => $b_name,
+                'count'    => $b_count,
+                'percent'  => $percent,
+                'provider' => self::get_bot_provider( $b_name ),
+            );
+        }
+
         return array(
-            'labels'     => $labels,
-            'series'     => $series_data,
-            'bot_totals' => array_slice( $bot_totals, 0, 8, true ),
+            'labels'                 => $labels,
+            'series'                 => $series_data,
+            'bandwidth_series'       => $bandwidth_series,
+            'bot_totals'             => $top_bots,
+            'bot_breakdown'          => $bot_breakdown,
+            'total_period_requests'  => $total_period_requests,
+            'total_period_bandwidth' => self::format_bandwidth( $total_period_bytes, 2 ),
+            'daily_avg_requests'     => $daily_avg_requests,
+            'daily_avg_bandwidth'    => $daily_avg_bandwidth,
+            'peak_day_count'         => $peak_day_count,
+            'peak_day_label'         => $peak_day_label,
         );
     }
 
