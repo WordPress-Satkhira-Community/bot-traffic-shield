@@ -5,7 +5,7 @@ Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -218,6 +218,18 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 
 **Core search engines stay safe.** Google, Bing, and Yahoo are always protected and cannot be disabled in the admin UI, so your main SEO rankings cannot be broken by mistake. Regional search engines (Baidu, Yandex, DuckDuckGo, and others), social link preview bots, and SEO/monitoring crawlers are allowed by default. You can optionally block any of those from the **Search Engine Rules** tab if you do not need their traffic. Allowed crawlers are checked **first** before any blocking logic runs.
 
+= What's new in version 2.1.2? =
+
+Version 2.1.2 introduces a major dashboard and metrics overhaul:
+*   **New:** Bandwidth Saved tracking and calculations with dynamic MB/GB formatting
+*   **New:** Dual-metric chart view — toggle between Blocked Requests and Bandwidth Saved
+*   **New:** Live Threats Feed on the dashboard displaying the latest intercepted bots in real-time
+*   **New:** Top Scrapers Leaderboard with visual progress bars and provider badges
+*   **New:** Server & Database Load Spared metric (~35 MySQL queries saved per blocked request)
+*   **New:** System Health & Protection Ribbon with one-click AJAX Live Refresh
+*   **New:** Period summary bar displaying period totals, daily average, bandwidth spared, and peak traffic day
+*   **Improved:** Professional executive-grade dashboard styling and responsive mobile layout
+
 = What's new in version 2.1.1? =
 
 Version 2.1.1 improves free-plugin settings and navigation:
@@ -351,6 +363,18 @@ No. The free version works completely offline on your server. No API keys, no ac
 
 == Changelog ==
 
+= 2.1.2 (2026-11-17) =
+* **New:** Estimated Bandwidth Saved KPI metric and trend visualization (MB/GB)
+* **New:** Dual-metric switcher on the analytics chart (Requests vs Bandwidth Saved)
+* **New:** Real-time Intercepted Threats Feed widget directly on the Dashboard tab
+* **New:** Top Scrapers Leaderboard with percentage progress bars and provider badges
+* **New:** Server Database Queries Spared metric (~35 queries bypassed per blocked request)
+* **New:** System Health & Protection Ribbon with instant AJAX dashboard refresh
+* **New:** Chart period summary statistics (Period Total, Daily Average, Bandwidth Spared, Peak Day)
+* **New:** Donut chart center metric summary and refined SaaS color palette
+* **New:** Developer filter hooks `btsld_bandwidth_per_request` and `btsld_queries_per_request`
+* **Improved:** Executive dashboard styling, KPI card typography, and responsive mobile/tablet layout
+
 = 2.1.1 (2026-11-09) =
 * **New:** Admin bar menu toggle in General Settings
 * **New:** Independent activity log toggle and configurable maximum retained entries
@@ -425,6 +449,9 @@ No. The free version works completely offline on your server. No API keys, no ac
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 2.1.2 =
+Adds estimated bandwidth saved tracking, dual-metric charts, live threats feed on dashboard, top scrapers leaderboard, and one-click AJAX refresh. Highly recommended update for all users.
 
 = 2.1.1 =
 Adds controls for the admin bar menu and activity log retention, and groups the free crawler rules under Rules & Policies. Recommended update for all users.

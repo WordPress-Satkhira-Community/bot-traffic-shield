@@ -3,7 +3,7 @@
  * Core protection and data engine for Bot Traffic Shield.
  *
  * @package BotTrafficShield
- * @version 2.1.1
+ * @version 2.1.2
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
