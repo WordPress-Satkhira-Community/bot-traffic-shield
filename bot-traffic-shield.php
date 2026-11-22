@@ -3,7 +3,7 @@
  * Plugin Name:       Bot Traffic Shield
  * Plugin URI:        https://wpsatkhira.com/bot-traffic-shield
  * Description:       Block AI crawlers and malicious scraper bots. Lightweight, configurable, with real-time charts, AI toggles, logging, and CSV export.
- * Version:           2.1.2
+ * Version:           2.1.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            WordPress Satkhira Community
@@ -22,7 +22,7 @@ final class BTSLD_Bot_Traffic_Shield {
     /**
      * Plugin version.
      */
-    const VERSION = '2.1.2';
+    const VERSION = '2.1.3';
 
     /**
      * Singleton instance.
@@ -94,6 +94,7 @@ final class BTSLD_Bot_Traffic_Shield {
      */
     private function init() {
         add_filter( 'plugin_action_links_' . BTSLD_PLUGIN_BASENAME, array( $this, 'plugin_action_links' ) );
+        add_filter( 'network_admin_plugin_action_links_' . BTSLD_PLUGIN_BASENAME, array( $this, 'plugin_action_links' ) );
 
         // Activation hook to set defaults and migrate settings if upgrading.
         register_activation_hook( BTSLD_PLUGIN_FILE, array( 'BTSLD_Core', 'on_activate' ) );
@@ -125,13 +126,21 @@ final class BTSLD_Bot_Traffic_Shield {
             esc_url( admin_url( 'admin.php?page=bot-traffic-shield' ) ),
             esc_html__( 'Settings', 'bot-traffic-shield' )
         );
-        $upgrade_link = sprintf(
-            '<a href="%s" style="color: #93003f; font-weight: bold;">%s</a>',
-            esc_url( BTSLD_Premium::get_upgrade_url() ),
-            esc_html__( 'Upgrade to Pro', 'bot-traffic-shield' )
-        );
 
-        array_unshift( $links, $settings_link, $upgrade_link );
+        $is_pro_active = class_exists( 'BTSLD_Premium' ) && method_exists( 'BTSLD_Premium', 'is_pro_active' )
+            ? BTSLD_Premium::is_pro_active()
+            : defined( 'BTSLD_PRO_VERSION' );
+
+        if ( ! $is_pro_active ) {
+            $upgrade_link = sprintf(
+                '<a href="%s" style="color: #93003f; font-weight: bold;">%s</a>',
+                esc_url( BTSLD_Premium::get_upgrade_url() ),
+                esc_html__( 'Upgrade to Pro', 'bot-traffic-shield' )
+            );
+            array_unshift( $links, $settings_link, $upgrade_link );
+        } else {
+            array_unshift( $links, $settings_link );
+        }
 
         return $links;
     }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Bot Traffic Shield - v2.1.2 Modern Admin Styles
+   Bot Traffic Shield - v2.1.3 Modern Admin Styles
    ========================================================================== */
 
 :root {
@@ -1458,4 +1458,201 @@ input:checked + .btsld-slider:before {
     width: 16px;
     height: 16px;
     color: #94a3b8;
+}
+
+/* Pro AI Policies Styling */
+.btsld-badge-free {
+    background: var(--btsld-slate-200);
+    color: var(--btsld-slate-700);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.btsld-badge-pro-status.is-locked {
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btsld-badge-pro-status.is-active {
+    background: #059669;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Pro AI Policies Card Header */
+.btsld-pro-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid var(--btsld-slate-200);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.btsld-pro-header-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.btsld-pro-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.btsld-pro-title-wrap h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--btsld-slate-900);
+}
+
+.btsld-pro-header-desc {
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+    max-width: 820px;
+}
+
+.btsld-pro-header-right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.btsld-upgrade-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 8px 18px !important;
+    height: auto !important;
+    background: #2563eb !important;
+    border: 1px solid #1d4ed8 !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+.btsld-upgrade-btn:hover,
+.btsld-upgrade-btn:focus {
+    background: #1d4ed8 !important;
+    border-color: #1e40af !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btsld-upgrade-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #fbbf24;
+}
+
+@media screen and (max-width: 782px) {
+    .btsld-pro-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+    .btsld-pro-header-right {
+        width: 100%;
+    }
+    .btsld-upgrade-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Locked Pro AI Cards */
+.btsld-pro-card-locked {
+    position: relative;
+    background: #f8fafc;
+    border: 1px dashed var(--btsld-slate-300);
+    opacity: 0.92;
+}
+
+.btsld-pro-card-locked:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.btsld-pro-lock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.btsld-pro-lock-pill .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+.btsld-pro-card-lock-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--btsld-slate-200);
+}
+
+.btsld-pro-lock-notice {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.btsld-pro-lock-notice .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    color: #94a3b8;
+}
+
+.btsld-pro-unlock-link {
+    color: #2563eb !important;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.btsld-pro-unlock-link:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline;
+}
+
+/* Unlocked Pro AI Cards */
+.btsld-pro-card-unlocked {
+    border-left: 3px solid #059669;
 }

@@ -3,7 +3,7 @@
  * Core protection and data engine for Bot Traffic Shield.
  *
  * @package BotTrafficShield
- * @version 2.1.2
+ * @version 2.1.3
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -41,10 +41,34 @@ class BTSLD_Core {
 
     /**
      * Registered AI bot catalog with metadata for granular toggle control.
+     * When Pro is active, returns both Free and Pro bots. When Free alone, returns Free bots.
      *
      * @return array
      */
     public static function get_registered_ai_bots() {
+        $bots = self::get_free_ai_bots();
+
+        $is_pro = false;
+        if ( class_exists( 'BTSLD_Premium' ) && method_exists( 'BTSLD_Premium', 'is_pro_active' ) ) {
+            $is_pro = BTSLD_Premium::is_pro_active();
+        } elseif ( defined( 'BTSLD_PRO_VERSION' ) ) {
+            $is_pro = true;
+        }
+
+        if ( $is_pro ) {
+            $pro_bots = self::get_pro_ai_bots();
+            $bots     = array_merge( $bots, $pro_bots );
+        }
+
+        return apply_filters( 'btsld_registered_ai_bots', $bots );
+    }
+
+    /**
+     * Free AI bot catalog (15 core bots available in free version).
+     *
+     * @return array
+     */
+    public static function get_free_ai_bots() {
         return array(
             'gptbot' => array(
                 'label'       => 'GPTBot (OpenAI)',
@@ -152,6 +176,147 @@ class BTSLD_Core {
                 'default'     => 1,
             ),
         );
+    }
+
+    /**
+     * Pro AI bot catalog (Premium policies unlocked with Pro).
+     *
+     * @return array
+     */
+    public static function get_pro_ai_bots() {
+        $pro_bots = array(
+            'deepseek' => array(
+                'label'       => 'DeepSeek (DeepSeek-R1 & V3)',
+                'provider'    => 'DeepSeek',
+                'description' => 'High-throughput web crawler collecting training corpora and reasoning context.',
+                'agents'      => array( 'DeepSeek-Bot', 'DeepSeekBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'grok' => array(
+                'label'       => 'Grok & xAI Crawler',
+                'provider'    => 'xAI',
+                'description' => 'Crawler deployed by xAI to train Grok models and ingest live web intelligence.',
+                'agents'      => array( 'xAI-Bot', 'GrokBot', 'xai-crawler' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'mistral' => array(
+                'label'       => 'Mistral AI Crawler',
+                'provider'    => 'Mistral AI',
+                'description' => 'Web crawler used by Mistral AI for training frontier LLMs and Le Chat services.',
+                'agents'      => array( 'MistralBot', 'mistral-ai' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'oai_searchbot' => array(
+                'label'       => 'OAI-SearchBot (ChatGPT Search)',
+                'provider'    => 'OpenAI',
+                'description' => 'Autonomous indexer powering OpenAI Search, real-time browsing, and citations.',
+                'agents'      => array( 'OAI-SearchBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'phind' => array(
+                'label'       => 'Phind Search & Code AI',
+                'provider'    => 'Phind',
+                'description' => 'Developer search engine crawler indexing code repositories and technical docs.',
+                'agents'      => array( 'PhindBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'iask_ai' => array(
+                'label'       => 'iAsk.ai Conversational Search',
+                'provider'    => 'iAsk',
+                'description' => 'Crawler for iAsk conversational answer engine querying and summarizing live sites.',
+                'agents'      => array( 'iAskBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'kagi_ai' => array(
+                'label'       => 'Kagi AI Assistant & Summarizer',
+                'provider'    => 'Kagi',
+                'description' => 'Indexes sites for Kagi search enrichment and AI quick answer synthesis.',
+                'agents'      => array( 'KagiBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'duckassist' => array(
+                'label'       => 'DuckAssist AI',
+                'provider'    => 'DuckDuckGo',
+                'description' => 'Crawls and parses articles to generate generative AI answers in DuckDuckGo search.',
+                'agents'      => array( 'DuckAssistBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'dataforseo' => array(
+                'label'       => 'DataForSEO AI Data Harvester',
+                'provider'    => 'DataForSEO',
+                'description' => 'Commercial-scale crawler harvesting data for third-party AI pipelines and training.',
+                'agents'      => array( 'DataForSeoBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'tencent_ai' => array(
+                'label'       => 'Tencent Hunyuan AI',
+                'provider'    => 'Tencent',
+                'description' => 'Crawler indexing web content for Tencent Hunyuan foundation LLMs and multimodal AI.',
+                'agents'      => array( 'Tencent-Hunyuan', 'TencentBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'baidu_ai' => array(
+                'label'       => 'Baidu ERNIE AI Bot',
+                'provider'    => 'Baidu',
+                'description' => 'Scrapes global web resources to train Baidu ERNIE foundation models.',
+                'agents'      => array( 'Baiduspider-AI', 'Baidu-AI' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'alibaba_ai' => array(
+                'label'       => 'Alibaba Tongyi (Qwen)',
+                'provider'    => 'Alibaba',
+                'description' => 'Automated crawler collecting training datasets for Alibaba Cloud Qwen models.',
+                'agents'      => array( 'Alibaba-Bot', 'TongyiBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'imagesift' => array(
+                'label'       => 'Imagesift Visual AI Scraper',
+                'provider'    => 'Imagesift',
+                'description' => 'Specialized scraper targeting media, imagery, and diagrams for vision AI models.',
+                'agents'      => array( 'ImagesiftBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'webzio' => array(
+                'label'       => 'Webzio AI Data Miner',
+                'provider'    => 'Webzio',
+                'description' => 'Automated extraction crawler scraping full-page contents for syndicated AI feeds.',
+                'agents'      => array( 'Webzio-Extended', 'Webzio' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+            'turnitin_ai' => array(
+                'label'       => 'Turnitin AI Scraper',
+                'provider'    => 'Turnitin',
+                'description' => 'Crawls academic and online articles to feed AI content classification systems.',
+                'agents'      => array( 'TurnitinBot' ),
+                'default'     => 1,
+                'pro'         => true,
+            ),
+        );
+
+        return apply_filters( 'btsld_pro_ai_bots', $pro_bots );
+    }
+
+    /**
+     * All known AI bots catalog (Free + Pro combined).
+     *
+     * @return array
+     */
+    public static function get_all_known_ai_bots() {
+        return array_merge( self::get_free_ai_bots(), self::get_pro_ai_bots() );
     }
 
     /**
@@ -775,7 +940,7 @@ class BTSLD_Core {
     public static function get_bot_provider( $bot_token ) {
         $bot_clean = strtolower( trim( $bot_token ) );
 
-        $ai_bots = self::get_registered_ai_bots();
+        $ai_bots = self::get_all_known_ai_bots();
         foreach ( $ai_bots as $key => $info ) {
             if ( $key === $bot_clean || stripos( $bot_token, $key ) !== false ) {
                 return $info['provider'];

@@ -5,7 +5,7 @@ Tags: Bad Bots, block bots, Stop Bots, AI Spider, AI Crawler
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,13 @@ This lightweight yet powerful plugin identifies and blocks a wide range of AI bo
 *   **Take Control** - Decide exactly who can and cannot access your valuable content
 
 ### ✨ Key Features (Free)
+
+**Pro AI Policies Preview & Integration (NEW in v2.1.3)**
+*   Showcase 15 advanced Pro AI crawler policies directly below Free AI Policies (DeepSeek, Grok & xAI, Mistral AI, OAI-SearchBot, Phind, iAsk.ai, Kagi AI, DuckAssist, DataForSEO, Tencent Hunyuan, Baidu ERNIE AI, Alibaba Tongyi, Imagesift, Webzio, Turnitin AI)
+*   Dynamic "Upgrade to Pro" plugin action link that automatically hides when Bot Traffic Shield Pro is active and reappears when deactivated
+*   Multisite network admin compatibility for dynamic plugin action links
+*   Clean flex-aligned policy header with informative details on the left and dedicated "Upgrade to Pro" action button on the right
+*   Seamless automatic policy unlock: All 30 AI policies unlock with full toggle controls when Bot Traffic Shield Pro is activated
 
 **Search Engine Rules (NEW in v1.0.6)**
 *   Split whitelist: Core search engines (Google, Bing, Yahoo) are always protected — no toggle, so SEO cannot be broken by accident
@@ -218,53 +225,6 @@ Stop letting AI companies profit from your hard work. Install Bot Traffic Shield
 
 **Core search engines stay safe.** Google, Bing, and Yahoo are always protected and cannot be disabled in the admin UI, so your main SEO rankings cannot be broken by mistake. Regional search engines (Baidu, Yandex, DuckDuckGo, and others), social link preview bots, and SEO/monitoring crawlers are allowed by default. You can optionally block any of those from the **Search Engine Rules** tab if you do not need their traffic. Allowed crawlers are checked **first** before any blocking logic runs.
 
-= What's new in version 2.1.2? =
-
-Version 2.1.2 introduces a major dashboard and metrics overhaul:
-*   **New:** Bandwidth Saved tracking and calculations with dynamic MB/GB formatting
-*   **New:** Dual-metric chart view — toggle between Blocked Requests and Bandwidth Saved
-*   **New:** Live Threats Feed on the dashboard displaying the latest intercepted bots in real-time
-*   **New:** Top Scrapers Leaderboard with visual progress bars and provider badges
-*   **New:** Server & Database Load Spared metric (~35 MySQL queries saved per blocked request)
-*   **New:** System Health & Protection Ribbon with one-click AJAX Live Refresh
-*   **New:** Period summary bar displaying period totals, daily average, bandwidth spared, and peak traffic day
-*   **Improved:** Professional executive-grade dashboard styling and responsive mobile layout
-
-= What's new in version 2.1.1? =
-
-Version 2.1.1 improves free-plugin settings and navigation:
-*   **New:** Admin bar menu can be enabled or disabled from General Settings
-*   **New:** Activity logging can be enabled or disabled independently of analytics
-*   **New:** Configure the maximum number of retained activity log entries
-*   **Improved:** Free AI crawler and search engine controls are available under Rules & Policies
-
-= What's new in version 2.0.1? =
-
-Version 2.0.1 prepares the free plugin for the official Pro add-on:
-*   Premium menu placeholders are now visible (locked until Bot Traffic Shield Pro is active)
-*   Cleaner integration point for Pro modules
-*   Version alignment with the Pro release
-*   Documentation updated with full Pro feature overview
-
-= What's new in version 1.0.6? =
-
-Version 1.0.6 adds controllable Search Engine Rules:
-*   **Core search engines** (Google, Bing, Yahoo) remain always protected with no toggle
-*   **Regional and other crawlers** (Baidu, Yandex, DuckDuckGo, social previews, SEO tools, monitors) are individually toggleable
-*   Confirmation dialog when disabling a search engine crawler
-*   Disabled crawlers are blocked with 403 and `Disallow` in robots.txt
-*   Same UI pattern as the AI Crawler Rules tab
-
-= What's new in version 1.0.5? =
-
-Version 1.0.5 is a major feature update:
-*   **Interactive Analytics Dashboard** with Chart.js trend graphs and doughnut charts
-*   **Granular AI Crawler Toggles** to enable/disable each AI provider individually
-*   **SEO Safety Whitelist** protecting 35+ search engines from accidental blocking
-*   **KPI Summary Cards** showing total blocks, daily blocks, active rules, and top scraper
-*   **Admin Bar Widget** with real-time blocked count and quick navigation
-*   **7/14/30-day timeframe switcher** for chart analytics
-
 = Which bots does it block by default? =
 
 The plugin includes a comprehensive blocklist organized by AI provider:
@@ -363,6 +323,15 @@ No. The free version works completely offline on your server. No API keys, no ac
 
 == Changelog ==
 
+= 2.1.3 (2026-11-22) =
+* **New:** 15 Pro AI crawler policy preview placeholders under Free AI Policies (DeepSeek, Grok & xAI, Mistral AI, OAI-SearchBot, Phind, iAsk.ai, Kagi AI, DuckAssist, DataForSEO, Tencent Hunyuan, Baidu ERNIE AI, Alibaba Tongyi, Imagesift, Webzio, Turnitin AI).
+* **New:** Dynamic plugin action link — "Upgrade to Pro" automatically hides on the Plugins list when Pro is activated and reappears when deactivated.
+* **New:** Multisite network admin support for dynamic plugin action links (`network_admin_plugin_action_links_`).
+* **New:** Redesigned Pro AI policies header with descriptive details on the left and dedicated "Upgrade to Pro" action on the right.
+* **New:** Automatic policy unlocking — all 30 AI policies seamlessly unlock with switches and bulk controls when Bot Traffic Shield Pro is active.
+* **Improved:** Streamlined Frequently Asked Questions by removing legacy version-release FAQ items into the dedicated Changelog.
+* **Improved:** Admin CSS cache busting and responsive mobile alignment for policy headers.
+
 = 2.1.2 (2026-11-17) =
 * **New:** Estimated Bandwidth Saved KPI metric and trend visualization (MB/GB)
 * **New:** Dual-metric switcher on the analytics chart (Requests vs Bandwidth Saved)
@@ -449,6 +418,9 @@ No. The free version works completely offline on your server. No API keys, no ac
 * Custom User-Agent blocking
 
 == Upgrade Notice ==
+
+= 2.1.3 =
+Adds 15 Pro AI crawler preview policies, dynamic "Upgrade to Pro" action link visibility based on Pro activation, streamlined FAQ, and improved admin UI styling. Recommended update for all users.
 
 = 2.1.2 =
 Adds estimated bandwidth saved tracking, dual-metric charts, live threats feed on dashboard, top scrapers leaderboard, and one-click AJAX refresh. Highly recommended update for all users.

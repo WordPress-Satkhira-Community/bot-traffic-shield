@@ -9,7 +9,7 @@
  * `btsld_premium_page_{key}` action. Without Pro, a locked preview is shown.
  *
  * @package BotTrafficShield
- * @version 2.1.2
+ * @version 2.1.3
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -87,6 +87,37 @@ class BTSLD_Premium {
          * @param bool $active Default false.
          */
         return (bool) apply_filters( 'btsld_premium_active', false );
+    }
+
+    /**
+     * Whether Bot Traffic Shield Pro is active (plugin activated or premium licensed).
+     *
+     * @return bool
+     */
+    public static function is_pro_active() {
+        if ( defined( 'BTSLD_PRO_VERSION' ) ) {
+            return true;
+        }
+
+        if ( class_exists( 'BTSLD_Pro' ) ) {
+            return true;
+        }
+
+        if ( self::is_active() ) {
+            return true;
+        }
+
+        if ( ! function_exists( 'is_plugin_active' ) ) {
+            include_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        if ( function_exists( 'is_plugin_active' ) ) {
+            if ( is_plugin_active( 'bot-traffic-shield-pro/bot-traffic-shield-pro.php' ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

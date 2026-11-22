@@ -1,6 +1,6 @@
 /**
  * Bot Traffic Shield - Admin Dashboard & Chart Engine
- * Version: 2.1.2
+ * Version: 2.1.3
  */
 (function($) {
     'use strict';
@@ -580,14 +580,26 @@
      * AI Crawler Bulk Actions (Select All / Deselect All)
      */
     function initBulkAiActions() {
+        // Free AI crawlers bulk actions
         $('#btsld-select-all-ai').on('click', function(e) {
             e.preventDefault();
-            $('.btsld-ai-checkbox').prop('checked', true);
+            $('.btsld-ai-checkbox:not(.btsld-pro-ai-checkbox)').prop('checked', true);
         });
 
         $('#btsld-deselect-all-ai').on('click', function(e) {
             e.preventDefault();
-            $('.btsld-ai-checkbox').prop('checked', false);
+            $('.btsld-ai-checkbox:not(.btsld-pro-ai-checkbox)').prop('checked', false);
+        });
+
+        // Pro AI policies bulk actions (when unlocked)
+        $('#btsld-select-all-pro-ai').on('click', function(e) {
+            e.preventDefault();
+            $('.btsld-pro-ai-checkbox').prop('checked', true);
+        });
+
+        $('#btsld-deselect-all-pro-ai').on('click', function(e) {
+            e.preventDefault();
+            $('.btsld-pro-ai-checkbox').prop('checked', false);
         });
     }
 

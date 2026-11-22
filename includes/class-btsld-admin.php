@@ -3,7 +3,7 @@
  * Admin management, settings, charts, and dashboard interface.
  *
  * @package BotTrafficShield
- * @version 2.1.2
+ * @version 2.1.3
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -182,6 +182,9 @@ class BTSLD_Admin {
         }
 
         $settings         = get_option( 'btsld_settings', array() );
+        $free_bots        = BTSLD_Core::get_free_ai_bots();
+        $pro_bots         = BTSLD_Core::get_pro_ai_bots();
+        $is_pro           = class_exists( 'BTSLD_Premium' ) && method_exists( 'BTSLD_Premium', 'is_pro_active' ) ? BTSLD_Premium::is_pro_active() : defined( 'BTSLD_PRO_VERSION' );
         $registered_bots  = BTSLD_Core::get_registered_ai_bots();
         $ai_toggles       = isset( $settings['ai_toggles'] ) && is_array( $settings['ai_toggles'] ) ? $settings['ai_toggles'] : array();
         $regional_engines = BTSLD_Core::get_regional_search_engines();
@@ -192,8 +195,8 @@ class BTSLD_Admin {
         if ( 'ai-policies' === $key ) :
             ?>
             <div class="btsld-section-heading">
-                <h2><?php esc_html_e( 'AI Crawler Rules', 'bot-traffic-shield' ); ?></h2>
-                <p><?php esc_html_e( 'Enable or disable protection against specific AI crawlers and data brokers.', 'bot-traffic-shield' ); ?></p>
+                <h2><?php esc_html_e( 'AI Crawler Policies', 'bot-traffic-shield' ); ?></h2>
+                <p><?php esc_html_e( 'Granular content protection rules to control LLM training crawlers, generative search engines, and automated data extractors.', 'bot-traffic-shield' ); ?></p>
             </div>
             <form action="options.php" method="post">
                 <?php settings_fields( 'btsld_settings_group' ); ?>
@@ -212,8 +215,11 @@ class BTSLD_Admin {
                 <div class="btsld-card">
                     <div class="btsld-card-header">
                         <div>
-                            <h2><?php esc_html_e( 'Manage AI Crawlers & Scrapers', 'bot-traffic-shield' ); ?></h2>
-                            <p class="btsld-card-desc"><?php esc_html_e( 'Enable or disable protection against specific AI crawlers and data brokers below.', 'bot-traffic-shield' ); ?></p>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h2><?php esc_html_e( 'Free AI Crawler Policies', 'bot-traffic-shield' ); ?></h2>
+                                <span class="btsld-badge-free"><?php esc_html_e( '15 Crawlers Included', 'bot-traffic-shield' ); ?></span>
+                            </div>
+                            <p class="btsld-card-desc"><?php esc_html_e( 'Enable or disable protection against standard AI crawlers and data brokers below.', 'bot-traffic-shield' ); ?></p>
                         </div>
                         <div class="btsld-bulk-actions">
                             <button type="button" id="btsld-select-all-ai" class="button button-secondary"><?php esc_html_e( 'Select All', 'bot-traffic-shield' ); ?></button>
@@ -221,7 +227,7 @@ class BTSLD_Admin {
                         </div>
                     </div>
                     <div class="btsld-ai-grid">
-                        <?php foreach ( $registered_bots as $bot_key => $bot_info ) :
+                        <?php foreach ( $free_bots as $bot_key => $bot_info ) :
                             $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
                             ?>
                             <div class="btsld-ai-card">
@@ -244,6 +250,88 @@ class BTSLD_Admin {
                     </div>
                     <div class="btsld-card-footer">
                         <?php submit_button( __( 'Save AI Crawler Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
+                    </div>
+                </div>
+
+                <!-- Pro AI Crawler Policies (under free AI policies) -->
+                <div class="btsld-card btsld-card-pro-policies" style="margin-top: 24px;">
+                    <div class="btsld-card-header btsld-pro-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                        <div class="btsld-pro-header-left" style="flex: 1; min-width: 0;">
+                            <div class="btsld-pro-title-wrap" style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;"><?php esc_html_e( 'Pro AI Crawler Policies', 'bot-traffic-shield' ); ?></h2>
+                                <?php if ( $is_pro ) : ?>
+                                    <span class="btsld-badge-pro-status is-active"><?php esc_html_e( 'PRO UNLOCKED', 'bot-traffic-shield' ); ?></span>
+                                <?php else : ?>
+                                    <span class="btsld-badge-pro-status is-locked"><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if ( $is_pro ) : ?>
+                                <p class="btsld-card-desc" style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                                    <?php esc_html_e( 'Extended protection against frontier LLMs, conversational search bots, code scrapers, and multimodal AI crawlers.', 'bot-traffic-shield' ); ?>
+                                </p>
+                            <?php else : ?>
+                                <p class="btsld-card-desc btsld-pro-header-desc" style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5; max-width: 820px;">
+                                    <?php esc_html_e( 'The policies below protect against frontier LLMs, search scrapers, and specialized AI data extractors (DeepSeek, Grok xAI, Mistral AI, OAI-SearchBot, Phind, and more). They are visible as a preview and automatically unlock when you activate Bot Traffic Shield Pro.', 'bot-traffic-shield' ); ?>
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="btsld-pro-header-right" style="flex-shrink: 0; display: flex; align-items: center;">
+                            <?php if ( $is_pro ) : ?>
+                                <div class="btsld-bulk-actions">
+                                    <button type="button" id="btsld-select-all-pro-ai" class="button button-secondary"><?php esc_html_e( 'Select All', 'bot-traffic-shield' ); ?></button>
+                                    <button type="button" id="btsld-deselect-all-pro-ai" class="button button-secondary"><?php esc_html_e( 'Deselect All', 'bot-traffic-shield' ); ?></button>
+                                </div>
+                            <?php else : ?>
+                                <a href="<?php echo esc_url( BTSLD_Premium::get_upgrade_url() ); ?>" class="button button-primary btsld-upgrade-btn" target="_blank" rel="noopener">
+                                    <span class="dashicons dashicons-star-filled"></span>
+                                    <span><?php esc_html_e( 'Upgrade to Pro', 'bot-traffic-shield' ); ?></span>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="btsld-ai-grid <?php echo $is_pro ? '' : 'btsld-ai-grid-locked'; ?>">
+                        <?php foreach ( $pro_bots as $bot_key => $bot_info ) :
+                            $is_active = isset( $ai_toggles[ $bot_key ] ) ? ( '1' === (string) $ai_toggles[ $bot_key ] ) : true;
+                            ?>
+                            <div class="btsld-ai-card <?php echo $is_pro ? 'btsld-pro-card-unlocked' : 'btsld-pro-card-locked'; ?>">
+                                <div class="btsld-ai-card-top">
+                                    <span class="btsld-ai-provider-badge"><?php echo esc_html( $bot_info['provider'] ); ?></span>
+                                    <?php if ( $is_pro ) : ?>
+                                        <label class="btsld-switch">
+                                            <input type="checkbox" class="btsld-ai-checkbox btsld-pro-ai-checkbox" name="btsld_settings[ai_toggles][<?php echo esc_attr( $bot_key ); ?>]" value="1" <?php checked( $is_active, true ); ?> />
+                                            <span class="btsld-slider"></span>
+                                        </label>
+                                    <?php else : ?>
+                                        <span class="btsld-pro-lock-pill" title="<?php esc_attr_e( 'Requires Bot Traffic Shield Pro', 'bot-traffic-shield' ); ?>">
+                                            <span class="dashicons dashicons-lock"></span>
+                                            <span><?php esc_html_e( 'PRO', 'bot-traffic-shield' ); ?></span>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <h3 class="btsld-ai-title">
+                                    <?php echo esc_html( $bot_info['label'] ); ?>
+                                </h3>
+                                <p class="btsld-ai-desc"><?php echo esc_html( $bot_info['description'] ); ?></p>
+                                <div class="btsld-ai-agents">
+                                    <?php foreach ( $bot_info['agents'] as $agent ) : ?>
+                                        <code><?php echo esc_html( $agent ); ?></code>
+                                    <?php endforeach; ?>
+                                </div>
+                                <?php if ( ! $is_pro ) : ?>
+                                    <div class="btsld-pro-card-lock-footer">
+                                        <span class="btsld-pro-lock-notice">
+                                            <span class="dashicons dashicons-lock"></span>
+                                            <a href="<?php echo esc_url( BTSLD_Premium::get_upgrade_url() ); ?>" class="btsld-pro-unlock-link"><?php esc_html_e( 'Unlock with Pro', 'bot-traffic-shield' ); ?> &rarr;</a>
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="btsld-card-footer">
+                        <?php submit_button( $is_pro ? __( 'Save All AI Policies', 'bot-traffic-shield' ) : __( 'Save AI Crawler Rules', 'bot-traffic-shield' ), 'primary', 'submit', false ); ?>
                     </div>
                 </div>
             </form>
