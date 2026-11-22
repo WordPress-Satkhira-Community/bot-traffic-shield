@@ -363,6 +363,9 @@ No. The free version works completely offline on your server. No API keys, no ac
 
 == Changelog ==
 
+= Unreleased =
+* **Fix:** Blocked crawlers can now read robots.txt (GET/HEAD /robots.txt is always served), so they see the Disallow rules the plugin adds for them instead of a 403.
+
 = 2.1.2 (2026-11-17) =
 * **New:** Estimated Bandwidth Saved KPI metric and trend visualization (MB/GB)
 * **New:** Dual-metric switcher on the analytics chart (Requests vs Bandwidth Saved)
