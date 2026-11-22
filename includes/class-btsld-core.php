@@ -530,16 +530,45 @@ class BTSLD_Core {
     }
 
     /**
+     * Whether this is a GET or HEAD request for exactly /robots.txt.
+     *
+     * Blocked crawlers must still be able to read robots.txt: it holds the
+     * Disallow rules this plugin adds for them, and under RFC 9309 a 4xx
+     * response for robots.txt lets a crawler assume there are no restrictions.
+     *
+     * @return bool
+     */
+    public static function is_robots_txt_request() {
+        $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_key( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
+        if ( 'GET' !== $method && 'HEAD' !== $method ) {
+            return false;
+        }
+
+        // Only the path is compared, so no further sanitizing is needed.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $uri  = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+        $path = substr( $uri, 0, strcspn( $uri, '?#' ) );
+
+        return '/robots.txt' === $path;
+    }
+
+    /**
      * Intercept request and block matching bots.
      *
      * SEO SAFETY: Whitelisted search engines are checked FIRST and always
      * allowed through, even if a custom pattern would otherwise match them.
+     * robots.txt is always served, so blocked crawlers can read their rules.
      */
     public function block_ai_crawlers() {
         $settings = get_option( 'btsld_settings', array() );
 
         // Master switch check.
         if ( ! isset( $settings['enabled'] ) || '1' !== (string) $settings['enabled'] ) {
+            return;
+        }
+
+        if ( self::is_robots_txt_request() ) {
+            do_action( 'btsld_request_outcome', 'allowed', 'robots_txt' );
             return;
         }
 
